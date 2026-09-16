@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LV Transportes — Gestão Financeira</title>
+    <!-- Bibliotecas do Chart.js e Excel -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
@@ -53,7 +55,6 @@
     .view.active { display: block; animation: reveal .35s ease both; }
     @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
     .icon { width: 19px; height: 19px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 19px; }
     .icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -103,7 +104,6 @@
     .sidebar { width: 266px; background: var(--rail); color: #fff; display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; z-index: 100; padding: 22px 16px 16px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .main-wrapper { flex: 1; min-width: 0; margin-left: 266px; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-    /* Sidebar Collapsed State */
     .layout-collapsed .sidebar { transform: translateX(-266px); }
     .layout-collapsed .main-wrapper { margin-left: 0; }
 
@@ -120,8 +120,20 @@
     .nav-item:hover { color: #fff; background: rgba(255,255,255,.06); transform: translateX(2px); }
     .nav-item:hover .icon, .nav-item.active .icon { color: var(--lime); }
     .nav-item.active { color: #fff; background: linear-gradient(90deg, rgba(18,167,162,.27), rgba(18,167,162,.1)); box-shadow: inset 3px 0 0 var(--lime); }
-    .sidebar-footer { padding: 16px 0 0; border-top: 1px solid rgba(255,255,255,.09); }
-    .user-mini { display: flex; align-items: center; gap: 10px; padding: 7px 10px 14px; }
+    .sidebar-footer { padding: 16px 0 0; border-top: 1px solid rgba(255,255,255,.09); display: flex; flex-direction: column; gap: 15px; }
+    
+    /* Configuração de competência na Sidebar */
+    .sidebar-period-config { display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.09); padding-bottom: 15px; }
+    .sidebar-period-config label { color: #60798a; font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .spc-row { display: flex; gap: 6px; }
+    .spc-btn { background: rgba(0,0,0,.15); border: 1px solid rgba(255,255,255,.08); color: #ecf3f5; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; outline: none; transition: .2s; flex: 1; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .spc-btn:hover { background: rgba(255,255,255,.08); }
+    .spc-lock-btn { width: 100%; text-align: center; justify-content: center; background: rgba(18,167,162,.12); color: var(--lime); border-color: rgba(200,237,116,.2); }
+    .spc-lock-btn:hover { background: rgba(18,167,162,.2); }
+    .spc-lock-btn.is-closed { background: rgba(222,91,91,.15); color: #ffb1b1; border-color: rgba(222,91,91,.25); }
+    .spc-lock-btn.is-closed:hover { background: rgba(222,91,91,.25); }
+
+    .user-mini { display: flex; align-items: center; gap: 10px; padding: 0 5px; }
     .user-avatar { width: 32px; height: 32px; border-radius: 11px; display: grid; place-items: center; color: var(--ink); background: var(--lime); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; }
     .user-mini strong { display: block; color: #ecf3f5; font-size: 12px; }
     .user-mini span { display: block; color: #718b9b; font-size: 10px; }
@@ -152,31 +164,22 @@
     .loading::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--info); box-shadow: 0 0 0 5px rgba(49,142,180,.12); }
 
     /* Shared cards, forms and actions */
-    .entry-card, .filters-panel, .chart-wrapper, .kpi-card, .period-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+    .entry-card, .filters-panel, .chart-wrapper, .kpi-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
     .entry-card { overflow: hidden; margin-bottom: 25px; }
     .entry-card > .entry-header { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 21px 25px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #fff 0%, #fbfcfc 100%); }
     .entry-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; letter-spacing: -.4px; color: var(--ink); }
     .entry-header p { color: var(--muted); font-size: 12px; margin-top: 3px; }
     .entry-body { padding: 25px; }
 
-    /* COMPACTAÇÃO DO PAINEL DE COMPETÊNCIA */
-    .period-panel { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 12px; padding: 12px 16px; border-color: #cdebe8; background: linear-gradient(105deg, #f0fbfa 0%, #fff 60%); position: relative; overflow: hidden; }
-    .period-panel::after { content: ''; width: 160px; height: 160px; position: absolute; right: 20%; top: -100px; border-radius: 50%; border: 1px solid rgba(18,167,162,.12); box-shadow: 0 0 0 18px rgba(18,167,162,.04), 0 0 0 36px rgba(18,167,162,.025); pointer-events: none; }
-    .period-group { display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; }
-    .period-label { color: var(--ink); font-size: 13px; font-weight: 700; margin-top: 2px; }
-    .period-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px; position: relative; z-index: 1; }
+    /* Grid dos Novos Gráficos */
+    .chart-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 15px; }
+
     .btn { min-height: 34px; padding: 6px 12px; border: 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .2s; }
     .btn:hover { transform: translateY(-1px); }
-    .btn-outline-danger { color: var(--danger); border: 1px solid #f0b9b9; background: #fff; }
-    .btn-outline-danger:hover { color: #fff; background: var(--danger); border-color: var(--danger); }
-    .btn-outline-info { color: var(--info); border: 1px solid #b9dcea; background: #fff; }
-    .btn-outline-info:hover { color: #fff; background: var(--info); border-color: var(--info); }
     .btn-excel { color: #fff; background: var(--ink); }
     .btn-excel:hover { background: var(--brand-dark); box-shadow: 0 7px 15px rgba(18,167,162,.18); }
-    .status-bloqueio-lbl { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 6px 11px; border-radius: 999px; color: var(--success); background: var(--success-pale); border: 1px solid #bcebd9; font-size: 11px; font-weight: 700; white-space: nowrap; }
-    .status-bloqueio-lbl::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(26,168,120,.12); }
-    .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
-    .section-heading h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; letter-spacing: -.5px; }
+    .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+    .section-heading h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; letter-spacing: -.5px; }
     .section-heading p { color: var(--muted); font-size: 11px; }
     
     .filters-panel { display: flex; align-items: flex-end; gap: 12px; padding: 10px 14px; margin-bottom: 12px; }
@@ -184,7 +187,8 @@
     .filter-item label { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
     .filter-item .form-control { min-height: 38px; padding: 8px 11px; }
     
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .kpi-grid-global { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 30px; }
     .kpi-card { min-height: 105px; padding: 14px 16px 12px; position: relative; overflow: hidden; }
     .kpi-card::after { content: ''; width: 72px; height: 72px; position: absolute; right: -22px; bottom: -27px; border-radius: 50%; border: 1px solid currentColor; opacity: .11; box-shadow: 0 0 0 10px currentColor; }
     .kpi-card:nth-child(1) { color: var(--info); background: linear-gradient(145deg, #fff 0%, #f5fbfd 100%); }
@@ -201,6 +205,7 @@
     
     .chart-wrapper { min-height: 250px; padding: 15px 22px; position: relative; display: flex; flex-direction: column; }
     .chart-wrapper::before { content: 'Evolução financeira'; display: block; color: var(--ink); font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    #grid-graficos-extras .chart-wrapper::before { display: none; }
     .chart-container { position: relative; flex: 1; min-height: 0; width: 100%; }
     
     .form-row { display: grid; grid-template-columns: 1fr; gap: 13px; margin-bottom: 17px; }
@@ -249,23 +254,8 @@
     .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); user-select: none; }
     .custom-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand); }
 
-    /* Competência em lista e ano sincronizado - SUPER COMPACTO */
-    .competencia-panel { display: block; padding: 12px 18px 14px; }
-    .competencia-topline { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(18,167,162,.12); }
-    
-    .competencia-topline .eyebrow { color: var(--brand-dark); font-weight: 800; margin: 0 0 3px; letter-spacing: 0.12em; }
-    .competencia-help { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; max-width: 320px; }
-    .competencia-panel > #filtro-mes-lancamento { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-    .competencia-selector { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 15px; padding-top: 12px; }
-    .selector-caption { margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-
-    /* BOTÃO QUE ABRE O MODAL DO MÊS */
-    #btn-abrir-modal-mes { width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; font-size: 13px; font-weight: 700; color: var(--brand-dark); background: #fff; border: 1px solid #bddedc; border-radius: 9px; padding: 8px 12px; cursor: pointer; transition: all .2s; }
-    #btn-abrir-modal-mes:hover { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(18,167,162,.09); }
-    #btn-abrir-modal-mes.is-closed { color: #a33f3f; border-color: #f0c8c8; background: #fff8f8; }
-    
     /* ESTILOS DOS BOTÕES DE MÊS DENTRO DO MODAL */
-    .grid-meses { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 20px; }
+    .grid-meses { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .month-option { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 12px; border: 1px solid #dce8e9; border-radius: 9px; color: var(--ink-2); background: #f8fafb; font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s ease; }
     .month-option:hover { color: var(--brand-dark); border-color: #8cd0cc; background: #f4fbfa; transform: translateY(-1px); }
     .month-option.active { color: var(--brand-dark); border-color: var(--brand); background: linear-gradient(135deg, #e9f9f7, #fff); box-shadow: 0 0 0 3px rgba(18,167,162,.09); }
@@ -273,10 +263,6 @@
     .month-option.is-closed:hover { color: #a33f3f; border-color: var(--danger); }
     .month-option.is-closed.active { color: #a33f3f; border-color: var(--danger); box-shadow: 0 0 0 3px rgba(222,91,91,.09); }
     .month-lock { flex: 0 0 auto; font-size: 14px; line-height: 1; }
-    
-    .year-list-block { min-width: 0; padding: 8px; border: 1px solid #cdebe8; border-radius: 10px; background: rgba(255,255,255,.82); }
-    .year-select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid #bddedc; border-radius: 8px; color: var(--brand-dark); background: #fff; font-size: 14px; font-weight: 800; outline: none; cursor: pointer; }
-    .year-select:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(18,167,162,.1); }
 
     /* Área Cadastros */
     #view-config .entry-card { max-width: none !important; margin: 0 0 22px; }
@@ -341,24 +327,29 @@
         .app-layout { display: block; }
         .sidebar { width: 100%; height: auto !important; max-height: none !important; min-height: 0; position: relative; padding: 12px 12px 10px; overflow: visible !important; transform: none !important; }
         .sidebar-brand { padding: 5px 8px 12px; }
-        .sidebar-section-label, .sidebar-footer { display: none; }
+        .sidebar-section-label { display: none; }
         .sidebar-nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 4px; padding-top: 10px; }
         .nav-item { min-width: max-content; width: auto; min-height: 40px; padding: 9px 11px; font-size: 12px; }
         .nav-item.active { box-shadow: inset 0 -3px 0 var(--lime); }
+        
+        .sidebar-footer { padding: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.09); gap: 10px; }
+        .sidebar-period-config { padding: 0; margin: 0; border: none; width: 100%; display: flex; flex-direction: row; align-items: center; gap: 10px; }
+        .sidebar-period-config label { display: none; }
+        .spc-row { margin: 0; flex: 1; }
+        .spc-action-row { margin: 0; width: auto; }
+        .spc-lock-btn { padding-left: 15px; padding-right: 15px; }
+        .user-mini, .btn-logout { display: none; }
+        
         .topbar { min-height: 48px; padding: 0 17px; }
         .breadcrumb span:first-child, .topbar-badge { display: none; }
         .content-area { padding: 16px 17px 35px; }
         .content-intro { display: block; margin-bottom: 20px; }
         .content-intro h1 { font-size: 24px; }
-        .period-panel { align-items: stretch; flex-direction: column; padding: 17px; }
-        .period-group { align-items: stretch; flex-direction: column; gap: 8px; }
-        .custom-month-input input[type='month'] { width: 100%; }
-        .period-actions { justify-content: flex-start; margin-top: 10px; }
-        .competencia-topline { display: block; }
-        .competencia-selector { grid-template-columns: 1fr; }
+        
         .filters-panel { align-items: stretch; flex-direction: column; }
         .filter-item { min-width: 0; }
-        .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .kpi-grid, .kpi-grid-global { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .chart-grid-2 { grid-template-columns: 1fr; } 
         .kpi-card { min-height: 100px; padding: 15px; }
         .kpi-value { margin-top: 6px; font-size: 19px; }
         .entry-card > .entry-header { align-items: flex-start; flex-direction: column; padding: 18px; }
@@ -370,9 +361,7 @@
         .cadastro-tab { min-width: 135px; }
     }
     @media (max-width: 420px) {
-        .kpi-grid { grid-template-columns: 1fr; }
-        .period-actions { align-items: stretch; flex-direction: column; }
-        .period-actions .btn, .period-actions .status-bloqueio-lbl { justify-content: center; width: 100%; }
+        .kpi-grid, .kpi-grid-global { grid-template-columns: 1fr; }
         .login-visual { min-height: 250px; }
     }
 </style>
@@ -436,6 +425,22 @@
                     <button id="nav-config" class="nav-item" onclick="window.mudarTela('view-config', this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.6-1H6v-2.6h.4A1.7 1.7 0 0 0 8 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2H15V5a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2V14H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></span><span>Cadastros</span></button>
                 </nav>
                 <div class="sidebar-footer">
+                    <!-- Configuração de Competência Movida para a Sidebar -->
+                    <div class="sidebar-period-config">
+                        <label>Competência de Trabalho</label>
+                        <input type="month" id="filtro-mes-lancamento" aria-hidden="true" tabindex="-1" style="position: absolute; opacity: 0; width: 1px; pointer-events: none;">
+                        <div class="spc-row">
+                            <!-- BOTÃO UNIFICADO MÊS + ANO -->
+                            <button type="button" class="spc-btn" id="btn-abrir-modal-mes" onclick="window.abrirModalMes()">
+                                <span id="mes-selecionado-texto">Carregando...</span>
+                                <span id="mes-selecionado-lock" style="font-size: 11px;"></span>
+                            </button>
+                        </div>
+                        <div class="spc-action-row">
+                            <button id="btn-toggle-bloqueio" class="spc-btn spc-lock-btn" onclick="window.toggleBloqueioMes()">Fechar Mês</button>
+                        </div>
+                    </div>
+                    
                     <div class="user-mini"><div class="user-avatar">LV</div><div><strong>Ambiente corporativo</strong><span>Sessão ativa</span></div></div>
                     <button class="btn-logout" onclick="window.fazerLogout()"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg></span>Encerrar sessão</button>
                 </div>
@@ -458,46 +463,49 @@
 
                     <!-- DASHBOARD -->
                     <div id="view-resultados" class="view">
-                        <div class="content-intro"><div><div class="eyebrow">Centro de comando</div><h1>Visão geral</h1><p>Acompanhe o desempenho financeiro e a competência em análise.</p></div></div>
-                        <div class="period-panel competencia-panel">
-                            <input type="month" id="filtro-mes-lancamento" aria-hidden="true" tabindex="-1">
-                            <div class="competencia-topline">
-                                <div>
-                                    <div class="eyebrow">Período de trabalho</div>
-                                    <div class="period-label">Competência de lançamentos</div>
-                                    <p class="competencia-help">Selecione o mês ativo para visualizar e lançar os movimentos.</p>
-                                </div>
-                                <div class="period-actions"><span id="status-bloqueio" class="status-bloqueio-lbl">Período aberto</span><button id="btn-toggle-bloqueio" class="btn btn-outline-danger" onclick="window.toggleBloqueioMes()">Fechar mês</button><button class="btn btn-excel" onclick="window.gerarRelatorioExcel()">Exportar planilha</button></div>
+                        <div class="section-heading"><div><h2>Balanço Global (Toda a Existência)</h2></div></div>
+                        <div class="kpi-grid kpi-grid-global">
+                            <div class="kpi-card" style="background: linear-gradient(145deg, #fff 0%, #f5fcf9 100%); border-color: #d1eadd;">
+                                <div class="kpi-title">Caixa · Saldo Atual</div>
+                                <div class="kpi-value val-success" id="global-caixa">R$ 0,00</div>
                             </div>
-                            <div class="competencia-selector">
-                                <div class="month-list-block">
-                                    <div class="selector-caption">Mês</div>
-                                    <button type="button" id="btn-abrir-modal-mes" onclick="window.abrirModalMes()">
-                                        <span id="mes-selecionado-texto">Carregando...</span>
-                                        <span id="mes-selecionado-lock" class="month-lock"></span>
-                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" style="margin-left:auto; opacity:0.6;"><path d="m6 9 6 6 6-6"/></svg>
-                                    </button>
-                                </div>
-                                <div class="year-list-block">
-                                    <div class="selector-caption">Ano</div>
-                                    <select id="ano-competencia" class="year-select" onchange="window.sincronizarCompetencia()" aria-label="Ano da competência"></select>
-                                </div>
+                            <div class="kpi-card" style="background: linear-gradient(145deg, #fff 0%, #f5fbfd 100%); border-color: #d2eaf1;">
+                                <div class="kpi-title">A Receber · Total Acumulado</div>
+                                <div class="kpi-value val-info" id="global-a-receber">R$ 0,00</div>
                             </div>
                         </div>
-                        <div class="section-heading"><div><h2>Resultados financeiros</h2><p>Indicadores atualizados de acordo com os filtros selecionados.</p></div></div>
+
+                        <div class="section-heading" style="margin-top: 15px;"><div><h2>Resultados do Período Financeiro</h2><p>Indicadores atualizados de acordo com os filtros de visão e data.</p></div></div>
+                        
                         <div class="filters-panel">
                             <div class="filter-item"><label for="tipo-visao">Visão analítica</label><select id="tipo-visao" class="form-control" onchange="window.mudarTipoVisao()"><option value="mes">Demonstrativo mensal</option><option value="ano">Comparativo anual</option></select></div>
                             <div class="filter-item" id="container-filtro-mes"><label for="filtro-mes">Mês do gráfico</label><input type="month" id="filtro-mes" class="form-control" onchange="window.renderizarResultados()"></div>
                             <div class="filter-item" id="container-filtro-ano" style="display: none;"><label for="filtro-ano">Exercício do gráfico</label><select id="filtro-ano" class="form-control" onchange="window.renderizarResultados()"></select></div>
+                            <div class="filter-item" style="margin-left: auto;">
+                                <button class="btn btn-excel" style="min-height: 38px; width: 100%;" onclick="window.gerarRelatorioExcel()">Exportar planilha</button>
+                            </div>
                         </div>
+
                         <div class="kpi-grid">
-                            <div class="kpi-card"><div class="kpi-title">A receber · acumulado geral</div><div class="kpi-value val-info" id="dash-a-receber">R$ 0,00</div></div>
-                            <div class="kpi-card"><div class="kpi-title" id="titulo-entradas">Receita bruta · gráfico</div><div class="kpi-value val-success" id="res-entradas">R$ 0,00</div></div>
-                            <div class="kpi-card"><div class="kpi-title" id="titulo-saidas">Custo total · gráfico</div><div class="kpi-value val-danger" id="res-saidas">R$ 0,00</div></div>
-                            <div class="kpi-card"><div class="kpi-title" id="titulo-liquido">Resultado líquido · gráfico</div><div class="kpi-value val-primary" id="res-liquido">R$ 0,00</div></div>
+                            <div class="kpi-card"><div class="kpi-title">A Receber (Mês Atual)</div><div class="kpi-value val-info" id="dash-a-receber">R$ 0,00</div></div>
+                            <div class="kpi-card"><div class="kpi-title" id="titulo-entradas">Receita Bruta (Mensal)</div><div class="kpi-value val-success" id="res-entradas">R$ 0,00</div></div>
+                            <div class="kpi-card"><div class="kpi-title" id="titulo-saidas">Custo Total (Mensal)</div><div class="kpi-value val-danger" id="res-saidas">R$ 0,00</div></div>
+                            <div class="kpi-card"><div class="kpi-title" id="titulo-liquido">Resultado Líquido (Mensal)</div><div class="kpi-value val-primary" id="res-liquido">R$ 0,00</div></div>
                         </div>
+                        
+                        <!-- GRÁFICO ORIGINAL (COLUNAS) -->
                         <div class="chart-wrapper">
                             <div class="chart-container"><canvas id="graficoResultados"></canvas></div>
+                        </div>
+
+                        <!-- NOVOS GRÁFICOS (HORIZONTAL E PIZZA) -->
+                        <div class="chart-grid-2" id="grid-graficos-extras" style="display: none;">
+                            <div class="chart-wrapper" style="min-height: 350px;">
+                                <div class="chart-container"><canvas id="graficoHorizontal"></canvas></div>
+                            </div>
+                            <div class="chart-wrapper" style="min-height: 350px;">
+                                <div class="chart-container"><canvas id="graficoPizza"></canvas></div>
+                            </div>
                         </div>
                         
                         <div class="section-heading" style="margin-top: 32px;">
@@ -691,7 +699,37 @@
     </div>
 
     <!-- MODAIS -->
-    <div class="modal-overlay" id="modal-meses"><div class="modal-content" style="width: min(450px, 100%);"><h3>Selecione o mês</h3><p>Escolha o mês de competência para visualizar e lançar os movimentos.</p><div id="lista-meses" class="grid-meses" role="listbox" aria-label="Meses da competência"><button type="button" class="month-option" data-mes="01" onclick="window.selecionarMesCompetencia('01')"><span>Janeiro</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="02" onclick="window.selecionarMesCompetencia('02')"><span>Fevereiro</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="03" onclick="window.selecionarMesCompetencia('03')"><span>Março</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="04" onclick="window.selecionarMesCompetencia('04')"><span>Abril</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="05" onclick="window.selecionarMesCompetencia('05')"><span>Maio</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="06" onclick="window.selecionarMesCompetencia('06')"><span>Junho</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="07" onclick="window.selecionarMesCompetencia('07')"><span>Julho</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="08" onclick="window.selecionarMesCompetencia('08')"><span>Agosto</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="09" onclick="window.selecionarMesCompetencia('09')"><span>Setembro</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="10" onclick="window.selecionarMesCompetencia('10')"><span>Outubro</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="11" onclick="window.selecionarMesCompetencia('11')"><span>Novembro</span><span class="month-lock" aria-hidden="true">🔓</span></button><button type="button" class="month-option" data-mes="12" onclick="window.selecionarMesCompetencia('12')"><span>Dezembro</span><span class="month-lock" aria-hidden="true">🔓</span></button></div><div class="modal-actions" style="margin-top: 20px;"><button class="btn-cancel" style="width: 100%;" onclick="window.fecharModalMes()">Cancelar</button></div></div></div>
+    <!-- Atualizado com a Seleção de Ano -->
+    <div class="modal-overlay" id="modal-meses">
+        <div class="modal-content" style="width: min(450px, 100%);">
+            <h3>Competência</h3>
+            <p>Escolha o ano e o mês de trabalho.</p>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <h4 style="font-size: 14px; font-weight: 700; color: var(--ink);">Ano base</h4>
+                <select id="ano-competencia-modal" class="form-control" onchange="window.atualizarMesesNoModal()" aria-label="Ano da competência" style="width: auto; min-width: 120px; min-height: 38px; padding: 5px 12px; font-weight: 700; color: var(--brand-dark); cursor: pointer;"></select>
+            </div>
+            
+            <div id="lista-meses" class="grid-meses" role="listbox" aria-label="Meses da competência">
+                <button type="button" class="month-option" data-mes="01" onclick="window.selecionarMesCompetencia('01')"><span>Janeiro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="02" onclick="window.selecionarMesCompetencia('02')"><span>Fevereiro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="03" onclick="window.selecionarMesCompetencia('03')"><span>Março</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="04" onclick="window.selecionarMesCompetencia('04')"><span>Abril</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="05" onclick="window.selecionarMesCompetencia('05')"><span>Maio</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="06" onclick="window.selecionarMesCompetencia('06')"><span>Junho</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="07" onclick="window.selecionarMesCompetencia('07')"><span>Julho</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="08" onclick="window.selecionarMesCompetencia('08')"><span>Agosto</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="09" onclick="window.selecionarMesCompetencia('09')"><span>Setembro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="10" onclick="window.selecionarMesCompetencia('10')"><span>Outubro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="11" onclick="window.selecionarMesCompetencia('11')"><span>Novembro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+                <button type="button" class="month-option" data-mes="12" onclick="window.selecionarMesCompetencia('12')"><span>Dezembro</span><span class="month-lock" aria-hidden="true">🔓</span></button>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn-cancel" style="width: 100%;" onclick="window.fecharModalMes()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal-overlay" id="modal-data"><div class="modal-content"><h3>Liquidar fatura</h3><p>Informe a data em que o recurso entrou na conta corrente.</p><input type="date" id="data-recebimento-modal" class="form-control" required><input type="hidden" id="nf-id-modal"><div class="modal-actions"><button class="btn-cancel" onclick="window.fecharModal()">Cancelar</button><button class="btn-confirm" onclick="window.confirmarRecebimento()">Efetivar recebimento</button></div></div></div>
     <div class="modal-overlay" id="modal-descricao"><div class="modal-content"><h3>Histórico da despesa</h3><p id="texto-descricao-modal" style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 500;"></p><div class="modal-actions"><button class="btn-cancel" style="width: 100%;" onclick="window.fecharModalDescricao()">Fechar</button></div></div></div>
 
@@ -722,7 +760,11 @@
     let categoriasDB = [];
     let veiculosDB = [];
     let funcionariosDB = [];
+    
+    // Variáveis Globais de Instância para os Gráficos
     let graficoInstancia = null;
+    let graficoHorizInstancia = null;
+    let graficoPizzaInstancia = null;
     let graficoVeiculoInstancia = null;
     let graficoFuncInstancia = null;
 
@@ -744,6 +786,8 @@
         
         setTimeout(() => {
             if(graficoInstancia) graficoInstancia.resize();
+            if(graficoHorizInstancia) graficoHorizInstancia.resize();
+            if(graficoPizzaInstancia) graficoPizzaInstancia.resize();
             if(graficoVeiculoInstancia) graficoVeiculoInstancia.resize();
             if(graficoFuncInstancia) graficoFuncInstancia.resize();
         }, 300);
@@ -775,7 +819,17 @@
     document.getElementById('filtro-mes').value = mesAtualDefault;
     document.getElementById('filtro-mes-lancamento').value = mesAtualDefault;
 
-    window.abrirModalMes = function() { document.getElementById('modal-meses').style.display = 'flex'; };
+    // Atualizado: Seta o modal de acordo com o ano ativo e renderiza
+    window.abrirModalMes = function() {
+        const hidden = document.getElementById('filtro-mes-lancamento').value;
+        if (hidden) {
+            const ano = hidden.split('-')[0];
+            const selModal = document.getElementById('ano-competencia-modal');
+            if (selModal) selModal.value = ano;
+        }
+        window.atualizarMesesNoModal();
+        document.getElementById('modal-meses').style.display = 'flex'; 
+    };
     window.fecharModalMes = function() { document.getElementById('modal-meses').style.display = 'none'; };
 
     window.fazerLogin = function() {
@@ -939,8 +993,9 @@
         }
     }
 
+    // Atualizado para pegar o select do modal em vez do menu lateral
     function preencherAnosCompetencia() {
-        const selectAno = document.getElementById('ano-competencia');
+        const selectAno = document.getElementById('ano-competencia-modal');
         if (!selectAno) return;
         const anoAtual = new Date().getFullYear();
         const anos = new Set([String(anoAtual - 2), String(anoAtual - 1), String(anoAtual), String(anoAtual + 1), String(anoAtual + 2)]);
@@ -957,17 +1012,39 @@
 
     function atualizarCompetenciaVisual() {
         const hidden = document.getElementById('filtro-mes-lancamento');
-        const selectAno = document.getElementById('ano-competencia');
         const selected = hidden?.value || new Date().toISOString().slice(0, 7);
         const [ano, mes] = selected.split('-');
-        if (selectAno && ano) selectAno.value = ano;
 
         let mesTexto = 'Selecione';
         let isFechadoTrigger = false;
 
         document.querySelectorAll('.month-option').forEach(button => {
-            const ativo = button.dataset.mes === mes;
-            const fechado = mesesBloqueados.some(item => item.mes === `${ano}-${button.dataset.mes}`);
+            if (button.dataset.mes === mes) {
+                mesTexto = button.querySelector('span').textContent;
+                isFechadoTrigger = mesesBloqueados.some(item => item.mes === `${ano}-${mes}`);
+            }
+        });
+
+        const textoTrigger = document.getElementById('mes-selecionado-texto');
+        const lockTrigger = document.getElementById('mes-selecionado-lock');
+        const btnTrigger = document.getElementById('btn-abrir-modal-mes');
+
+        // Mostra Mês e Ano juntos no botão
+        if(textoTrigger) textoTrigger.textContent = `${mesTexto} ${ano}`;
+        if(lockTrigger) lockTrigger.textContent = isFechadoTrigger ? '🔒' : '🔓';
+        if(btnTrigger) btnTrigger.classList.toggle('is-closed', isFechadoTrigger);
+    }
+
+    // Função NOVA: Atualiza a preview de cadeados/ativo apenas enquanto navega no modal
+    window.atualizarMesesNoModal = function() {
+        const anoSelecionado = document.getElementById('ano-competencia-modal').value;
+        const hidden = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
+        const [anoAtualAtivo, mesAtualAtivo] = hidden.split('-');
+
+        document.querySelectorAll('.month-option').forEach(button => {
+            const btnMes = button.dataset.mes;
+            const ativo = (btnMes === mesAtualAtivo) && (anoSelecionado === anoAtualAtivo);
+            const fechado = mesesBloqueados.some(item => item.mes === `${anoSelecionado}-${btnMes}`);
             
             button.classList.toggle('active', ativo);
             button.classList.toggle('is-closed', fechado);
@@ -975,33 +1052,15 @@
             const lock = button.querySelector('.month-lock');
             if (lock) lock.textContent = fechado ? '🔒' : '🔓';
             
-            button.setAttribute('aria-label', `${button.querySelector('span')?.textContent || ''} ${ano} — ${fechado ? 'fechado' : 'aberto'}`);
-
-            if (ativo) { mesTexto = button.querySelector('span').textContent; isFechadoTrigger = fechado; }
+            button.setAttribute('aria-label', `${button.querySelector('span')?.textContent || ''} ${anoSelecionado} — ${fechado ? 'fechado' : 'aberto'}`);
         });
-
-        const textoTrigger = document.getElementById('mes-selecionado-texto');
-        const lockTrigger = document.getElementById('mes-selecionado-lock');
-        const btnTrigger = document.getElementById('btn-abrir-modal-mes');
-
-        if(textoTrigger) textoTrigger.textContent = mesTexto;
-        if(lockTrigger) lockTrigger.textContent = isFechadoTrigger ? '🔒' : '🔓';
-        if(btnTrigger) btnTrigger.classList.toggle('is-closed', isFechadoTrigger);
-    }
-
-    window.selecionarMesCompetencia = function(mes) {
-        const ano = document.getElementById('ano-competencia')?.value || new Date().getFullYear().toString();
-        document.getElementById('filtro-mes-lancamento').value = `${ano}-${mes}`;
-        window.fecharModalMes();
-        atualizarCompetenciaVisual();
-        window.mudarMesLancamento();
     };
 
-    window.sincronizarCompetencia = function() {
-        const atual = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
-        const mes = atual.slice(5, 7) || '01';
-        const ano = document.getElementById('ano-competencia').value;
+    // Pega o ano do modal agora, em vez de pegar da sidebar
+    window.selecionarMesCompetencia = function(mes) {
+        const ano = document.getElementById('ano-competencia-modal')?.value || new Date().getFullYear().toString();
         document.getElementById('filtro-mes-lancamento').value = `${ano}-${mes}`;
+        window.fecharModalMes();
         atualizarCompetenciaVisual();
         window.mudarMesLancamento();
     };
@@ -1258,7 +1317,6 @@
         const mesSelecionado = document.getElementById('filtro-mes-lancamento').value;
         const isBloqueado = mesesBloqueados.some(m => m.mes === mesSelecionado);
         
-        const statusSpan = document.getElementById('status-bloqueio');
         const btnToggle = document.getElementById('btn-toggle-bloqueio');
         const btnSubmitNf = document.getElementById('btn-submit-nf');
         const btnSubmitGasto = document.getElementById('btn-submit-gasto');
@@ -1274,21 +1332,13 @@
         }
 
         if (isBloqueado) {
-            statusSpan.innerText = "🔒 Competência Fechada";
-            statusSpan.style.color = "var(--danger)";
-            statusSpan.style.borderColor = "var(--danger)";
-            statusSpan.style.background = "rgba(239, 68, 68, 0.1)";
             btnToggle.innerText = "Reabrir Mês";
-            btnToggle.className = "btn btn-outline-info";
+            btnToggle.className = "spc-btn spc-lock-btn is-closed";
             btnSubmitNf.disabled = true;
             btnSubmitGasto.disabled = true;
         } else {
-            statusSpan.innerText = "🔓 Competência Aberta";
-            statusSpan.style.color = "var(--success)";
-            statusSpan.style.borderColor = "var(--success)";
-            statusSpan.style.background = "rgba(16, 185, 129, 0.1)";
             btnToggle.innerText = "Fechar Mês";
-            btnToggle.className = "btn btn-outline-danger";
+            btnToggle.className = "spc-btn spc-lock-btn";
             btnSubmitNf.disabled = false;
             btnSubmitGasto.disabled = false;
         }
@@ -1337,13 +1387,36 @@
     };
 
     function atualizarDashboardPrincipal() {
-        let tARec = 0; const mes = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
+        // Cálculo do BALANÇO GERAL (Toda Existência)
+        let globalCaixa = 0;
+        let globalAReceber = 0;
+
         notasFiscais.forEach(nf => {
-            if (nf.status === 'pendente') {
-                if (!nf.dataLancamento || nf.dataLancamento.substring(0,7) <= mes) tARec += parseFloat(nf.valor);
+            if (nf.status === 'pago') {
+                globalCaixa += parseFloat(nf.valor);
+            } else if (nf.status === 'pendente') {
+                globalAReceber += parseFloat(nf.valor);
             }
         });
-        document.getElementById('dash-a-receber').innerText = formatarMoeda(tARec);
+
+        gastos.forEach(gasto => {
+            globalCaixa -= parseFloat(gasto.valor);
+        });
+
+        document.getElementById('global-caixa').innerText = formatarMoeda(globalCaixa);
+        document.getElementById('global-caixa').className = globalCaixa >= 0 ? 'kpi-value val-success' : 'kpi-value val-danger';
+        document.getElementById('global-a-receber').innerText = formatarMoeda(globalAReceber);
+
+        // Cálculo do BALANÇO MENSAL (A Receber apenas do Mês corrente selecionado)
+        let tARecMes = 0; 
+        const mes = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
+        
+        notasFiscais.forEach(nf => {
+            if (nf.status === 'pendente' && nf.dataLancamento && nf.dataLancamento.substring(0,7) === mes) {
+                tARecMes += parseFloat(nf.valor);
+            }
+        });
+        document.getElementById('dash-a-receber').innerText = formatarMoeda(tARecMes);
     }
 
     function renderizarNF() {
@@ -1548,15 +1621,29 @@
             }
         });
 
-        document.getElementById('titulo-entradas').innerText = "Receita Bruta (Gráfico)"; document.getElementById('titulo-saidas').innerText = "Custo Total (Gráfico)"; document.getElementById('titulo-liquido').innerText = "Resultado Líquido (Gráfico)";
+        document.getElementById('titulo-entradas').innerText = "Receita Bruta (Mensal)"; document.getElementById('titulo-saidas').innerText = "Custo Total (Mensal)"; document.getElementById('titulo-liquido').innerText = "Resultado Líquido (Mensal)";
         document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
         document.getElementById('res-liquido').innerText = formatarMoeda(totalEntradas - totalSaidas); document.getElementById('res-liquido').className = (totalEntradas - totalSaidas) < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
 
         let arrGastos = Object.keys(gastosPorCategoria).map((key, index) => { return { cat: key, val: gastosPorCategoria[key], color: corBase[index % corBase.length] }; });
         arrGastos = arrGastos.filter(item => item.val > 0); arrGastos.sort((a, b) => b.val - a.val);
 
-        const categoriasNomes = ['Entradas', ...arrGastos.map(item => item.cat)]; const valoresGrafico = [totalEntradas, ...arrGastos.map(item => item.val)]; const cores = ['#10b981', ...arrGastos.map(item => item.color)];
-        desenharGrafico('bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Detalhamento - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`);
+        // Removemos as "Entradas" dos gráficos da Visão Mensal (apenas Despesas renderizadas)
+        const categoriasNomes = [...arrGastos.map(item => item.cat)]; 
+        const valoresGrafico = [...arrGastos.map(item => item.val)]; 
+        const cores = [...arrGastos.map(item => item.color)];
+        
+        // Exibir Grid dos extras na visão mês
+        document.getElementById('grid-graficos-extras').style.display = 'grid';
+
+        // 1. Gráfico Original (Colunas)
+        desenharGraficoMaster('graficoResultados', 'bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Detalhamento de Saídas - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true, 'x');
+
+        // 2. Gráfico Horizontal
+        desenharGraficoMaster('graficoHorizontal', 'bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Comparativo de Despesas - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true, 'y');
+
+        // 3. Gráfico de Pizza
+        desenharGraficoMaster('graficoPizza', 'pie', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores }], `Proporção por Despesa - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true);
     }
 
     function renderizarVisaoAno() {
@@ -1566,25 +1653,83 @@
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(ano)) { entradasMes[parseInt(nf.dataRecebimento.split('-')[1]) - 1] += parseFloat(nf.valor); totalEntradas += parseFloat(nf.valor); } });
         gastos.forEach(gasto => { if (gasto.data && gasto.data.startsWith(ano)) { saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); totalSaidas += parseFloat(gasto.valor); } });
 
-        document.getElementById('titulo-entradas').innerText = "Faturamento Anual (Gráfico)"; document.getElementById('titulo-saidas').innerText = "Despesa Anual (Gráfico)"; document.getElementById('titulo-liquido').innerText = "Balanço Geral (Gráfico)";
+        document.getElementById('titulo-entradas').innerText = "Faturamento (Anual)"; document.getElementById('titulo-saidas').innerText = "Despesa (Anual)"; document.getElementById('titulo-liquido').innerText = "Balanço (Anual)";
         document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
         document.getElementById('res-liquido').innerText = formatarMoeda(totalEntradas - totalSaidas); document.getElementById('res-liquido').className = (totalEntradas - totalSaidas) < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
 
-        desenharGrafico('bar', ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'], [ { label: 'Receitas', data: entradasMes, backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Despesas', data: saidasMes, backgroundColor: '#ef4444', borderRadius: 4 } ], `Exercício - ${ano}`);
+        // Exibir Grid dos extras na visão ano
+        document.getElementById('grid-graficos-extras').style.display = 'grid';
+
+        const labelsMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        // Na visão anual é mantido Entrada e Saída
+        const dataSetsAnual = [ { label: 'Receitas', data: entradasMes, backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Despesas', data: saidasMes, backgroundColor: '#ef4444', borderRadius: 4 } ];
+
+        // 1. Gráfico Original
+        desenharGraficoMaster('graficoResultados', 'bar', labelsMeses, dataSetsAnual, `Exercício - ${ano}`, false, 'x');
+
+        // 2. Gráfico Horizontal
+        desenharGraficoMaster('graficoHorizontal', 'bar', labelsMeses, dataSetsAnual, `Exercício Horizontal - ${ano}`, false, 'y');
+
+        // 3. Gráfico Pizza (Mostra o balanço total Anual)
+        desenharGraficoMaster('graficoPizza', 'pie', ['Total Receitas', 'Total Despesas'], [{ label: 'Acumulado (R$)', data: [totalEntradas, totalSaidas], backgroundColor: ['#10b981', '#ef4444'] }], `Balanço Geral Anual - ${ano}`, true);
     }
 
-    function desenharGrafico(tipo, labels, datasets, titulo) {
-        const ctx = document.getElementById('graficoResultados').getContext('2d');
-        if (graficoInstancia) graficoInstancia.destroy();
-        Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#64748b';
-        graficoInstancia = new Chart(ctx, { 
-            type: tipo, data: { labels: labels, datasets: datasets }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: datasets.length > 1, position: 'top' }, title: { display: true, text: titulo, font: { size: 14, weight: '600' }, color: '#0f172a' } }, 
-            scales: { y: { beginAtZero: true, grid: { color: '#e2e8f0' } }, x: { grid: { display: false } } } } 
-        });
+    // FUNÇÃO MASTER PARA DESENHAR OS 3 GRÁFICOS
+    function desenharGraficoMaster(canvasId, tipo, labels, datasets, titulo, showLabels, indexAxis = 'x') {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+
+        // Destruir instâncias anteriores
+        if (canvasId === 'graficoResultados' && graficoInstancia) graficoInstancia.destroy();
+        if (canvasId === 'graficoHorizontal' && typeof graficoHorizInstancia !== 'undefined' && graficoHorizInstancia) graficoHorizInstancia.destroy();
+        if (canvasId === 'graficoPizza' && typeof graficoPizzaInstancia !== 'undefined' && graficoPizzaInstancia) graficoPizzaInstancia.destroy();
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // Configuração dos Rótulos (Valores Avista) - Removido no Pizza!
+        const datalabelsConfig = showLabels ? {
+            display: tipo === 'pie' ? false : true, // <--- Aqui garante que não exiba na Pizza.
+            color: '#718096',
+            font: { weight: 'bold', size: 10 },
+            formatter: function(value) {
+                if (value === 0) return '';
+                let v = (value).toFixed(2).replace('.', ',');
+                return 'R$ ' + v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            },
+            anchor: 'end',
+            align: indexAxis === 'y' ? 'right' : 'top',
+            offset: 4
+        } : { display: false };
+
+        const config = {
+            type: tipo,
+            data: { labels: labels, datasets: datasets },
+            options: {
+                indexAxis: indexAxis,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: tipo === 'pie' || datasets.length > 1, position: tipo === 'pie' ? 'right' : 'top' },
+                    title: { display: true, text: titulo, font: { size: 14, weight: '600' }, color: '#0f172a' },
+                    datalabels: datalabelsConfig
+                },
+                scales: tipo === 'pie' ? {} : {
+                    y: indexAxis === 'x' ? { beginAtZero: true, grid: { color: '#e2e8f0' } } : { grid: { display: false } },
+                    x: indexAxis === 'y' ? { beginAtZero: true, grid: { color: '#e2e8f0' } } : { grid: { display: false } }
+                },
+                layout: {
+                    padding: (showLabels && tipo !== 'pie') ? { top: 25, right: indexAxis === 'y' ? 70 : 25 } : 0
+                }
+            },
+            plugins: [ChartDataLabels] // Plugin injetado globalmente pela biblioteca acima
+        };
+
+        const novaInstancia = new Chart(ctx, config);
+
+        // Salva a referência
+        if (canvasId === 'graficoResultados') graficoInstancia = novaInstancia;
+        if (canvasId === 'graficoHorizontal') graficoHorizInstancia = novaInstancia;
+        if (canvasId === 'graficoPizza') graficoPizzaInstancia = novaInstancia;
     }
 
     // --- NOVA LÓGICA DE GRÁFICOS VINCULADOS ---
@@ -1613,7 +1758,6 @@
         
         let tipoGrafico = selectTipo.value;
         
-        // Regra de Negócio: Se o usuário selecionou Acumulado do ano até o mês, TRAVA em Gráfico de Barras
         if (modoPeriodo === 'acumulado') {
             selectTipo.value = 'bar';
             selectTipo.disabled = true;
@@ -1626,11 +1770,9 @@
         let periodoTexto = "";
 
         if (modoPeriodo === 'mes') {
-            // Apenas despesas daquele mês exato selecionado
             gastosFiltrados = gastos.filter(g => g.categoria === catSelecionada && g.data && g.data.startsWith(mesAnoSelecionado));
             periodoTexto = `${mesStr}/${anoStr}`;
         } else {
-            // Acumulado do início do ano até o mês selecionado
             gastosFiltrados = gastos.filter(g => {
                 if (g.categoria !== catSelecionada || !g.data) return false;
                 const gAno = g.data.substring(0,4);
@@ -1650,7 +1792,6 @@
                 if(g.veiculo) { agVeiculos[g.veiculo] = (agVeiculos[g.veiculo] || 0) + parseFloat(g.valor); }
             });
             
-            // Ordena os itens do maior valor para o menor, p/ melhor visualização no gráfico de barras
             let arrVeiculos = Object.keys(agVeiculos).map(k => ({ nome: k, valor: agVeiculos[k] }));
             arrVeiculos.sort((a,b) => b.valor - a.valor);
             const lbVeiculos = arrVeiculos.map(i => i.nome);
@@ -1676,7 +1817,8 @@
                     maintainAspectRatio: false, 
                     plugins: { 
                         legend: { display: tipoGrafico === 'doughnut', position: 'right' }, 
-                        title: { display: true, text: `Por Veículo (${periodoTexto})`, font: { size: 14 } } 
+                        title: { display: true, text: `Por Veículo (${periodoTexto})`, font: { size: 14 } },
+                        datalabels: { display: false } // Remove Datalabels extra from sub-charts
                     }, 
                     cutout: tipoGrafico === 'doughnut' ? '65%' : undefined,
                     scales: tipoGrafico === 'bar' ? { y: { beginAtZero: true }, x: { grid: { display: false } } } : undefined
@@ -1692,7 +1834,6 @@
                 if(g.funcionario) { agFuncs[g.funcionario] = (agFuncs[g.funcionario] || 0) + parseFloat(g.valor); }
             });
 
-            // Ordena os itens do maior valor para o menor
             let arrFuncs = Object.keys(agFuncs).map(k => ({ nome: k, valor: agFuncs[k] }));
             arrFuncs.sort((a,b) => b.valor - a.valor);
             const lbFuncs = arrFuncs.map(i => i.nome);
@@ -1718,7 +1859,8 @@
                     maintainAspectRatio: false, 
                     plugins: { 
                         legend: { display: tipoGrafico === 'doughnut', position: 'right' }, 
-                        title: { display: true, text: `Por Funcionário (${periodoTexto})`, font: { size: 14 } } 
+                        title: { display: true, text: `Por Funcionário (${periodoTexto})`, font: { size: 14 } },
+                        datalabels: { display: false } // Remove Datalabels extra from sub-charts
                     }, 
                     cutout: tipoGrafico === 'doughnut' ? '65%' : undefined,
                     scales: tipoGrafico === 'bar' ? { y: { beginAtZero: true }, x: { grid: { display: false } } } : undefined
