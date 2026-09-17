@@ -2,8 +2,34 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LV Transportes — Gestão Financeira</title>
+    
+    <!-- Meta Tags para PWA e Instalação Mobile -->
+    <meta name="theme-color" content="#12a7a2">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LV Transp">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- Link do Manifest Dinâmico -->
+    <link id="manifest-link" rel="manifest">
+    <script>
+        // Injeção do Manifest com data URI para manter arquivo único
+        const manifest = {
+            name: "LV Transportes",
+            short_name: "LV Transp",
+            start_url: window.location.href,
+            display: "standalone",
+            background_color: "#0f202b",
+            theme_color: "#12a7a2",
+            icons: [{ src: "icon.png", sizes: "192x192 512x512", type: "image/png", purpose: "any maskable" }]
+        };
+        const manifestStr = encodeURIComponent(JSON.stringify(manifest));
+        document.getElementById('manifest-link').setAttribute('href', 'data:application/json;charset=utf-8,' + manifestStr);
+    </script>
+
     <!-- Bibliotecas do Chart.js e Excel -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -368,6 +394,21 @@
 </style>
 </head>
 <body>
+    <!-- SERVICE WORKER IN-LINE (PWA INSTALLABILITY) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    if (regs.length === 0) {
+                        const swCode = "self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(self.clients.claim())); self.addEventListener('fetch', e => {});";
+                        const blob = new Blob([swCode], { type: 'application/javascript' });
+                        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+                    }
+                });
+            });
+        }
+    </script>
+
     <!-- LOGIN -->
     <div id="view-login" class="view active">
         <div class="login-shell">
@@ -448,7 +489,6 @@
             <main class="main-wrapper">
                 <header class="topbar">
                     <div style="display: flex; align-items: center; gap: 14px;">
-                        <!-- BOTÃO HAMBURGUER (TOGGLE SIDEBAR) -->
                         <button id="btn-toggle-sidebar" class="sidebar-toggle" onclick="window.toggleSidebar()" title="Expandir/Recolher Menu">
                             <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         </button>
@@ -492,12 +532,10 @@
                             <div class="kpi-card"><div class="kpi-title" id="titulo-liquido">Resultado Líquido (Mensal)</div><div class="kpi-value val-primary" id="res-liquido">R$ 0,00</div></div>
                         </div>
                         
-                        <!-- GRÁFICO ORIGINAL (COLUNAS) -->
                         <div class="chart-wrapper">
                             <div class="chart-container"><canvas id="graficoResultados"></canvas></div>
                         </div>
 
-                        <!-- NOVOS GRÁFICOS (HORIZONTAL E PIZZA) -->
                         <div class="chart-grid-2" id="grid-graficos-extras" style="display: none;">
                             <div class="chart-wrapper" style="min-height: 350px;">
                                 <div class="chart-container"><canvas id="graficoHorizontal"></canvas></div>
@@ -514,7 +552,6 @@
                             </div>
                         </div>
                         
-                        <!-- CONTROLES DOS GRÁFICOS VINCULADOS -->
                         <div class="filters-panel" id="panel-filtros-vinculos" style="display:none;">
                             <div class="filter-item">
                                 <label for="filtro-cat-vinculada">Categoria com vínculo</label>
@@ -611,7 +648,6 @@
 
                         <div class="section-heading" style="margin-bottom: 12px;"><div><h2>Despesas Lançadas</h2><p>Listagem de custos da competência.</p></div></div>
                         
-                        <!-- FLAG GLOBAL E FILTRO DE CATEGORIA NA TABELA -->
                         <div class="filters-panel" style="margin-bottom: 16px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                             <div class="filter-item" style="min-width: 250px;">
                                 <label for="filtro-tabela-categoria">Filtrar por Categoria Específica</label>
@@ -760,7 +796,7 @@
     </div>
     
     <div class="modal-overlay" id="modal-data"><div class="modal-content"><h3>Liquidar fatura</h3><p>Informe a data em que o recurso entrou na conta corrente.</p><input type="date" id="data-recebimento-modal" class="form-control" required><input type="hidden" id="nf-id-modal"><div class="modal-actions"><button class="btn-cancel" onclick="window.fecharModal()">Cancelar</button><button class="btn-confirm" onclick="window.confirmarRecebimento()">Efetivar recebimento</button></div></div></div>
-    
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -940,7 +976,6 @@
             categoriasDB.forEach(cat => { selectCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
         }
 
-        // ALIMENTAR O NOVO FILTRO DA TABELA DE SAÍDAS
         const selectFiltroCat = document.getElementById('filtro-tabela-categoria');
         if(selectFiltroCat) {
             const valAntigo = selectFiltroCat.value;
@@ -1549,13 +1584,11 @@
         const mesFiltro = document.getElementById('filtro-mes-lancamento').value;
         const estaBloqueado = isMesBloqueadoVerificacao(mesFiltro);
         
-        // Mantém a soma de *TODAS* as saídas do mês para o card principal
         let somaSaidasGeral = 0;
         let todosGastosDoMes = gastos.filter(gasto => gasto.data && gasto.data.startsWith(mesFiltro));
         todosGastosDoMes.forEach(g => somaSaidasGeral += parseFloat(g.valor));
         document.getElementById('total-saidas-tab').innerText = formatarMoeda(somaSaidasGeral);
 
-        // Aplica o filtro de Tabela se houver
         const filtroCat = document.getElementById('filtro-tabela-categoria')?.value;
         let gastosFiltrados = todosGastosDoMes;
         if (filtroCat) {
@@ -1583,6 +1616,7 @@
             let htmlDesc = '';
             if (gasto.descricao && gasto.descricao.trim() !== '') {
                 const descSegura = gasto.descricao.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
                 htmlDesc = `
                 <span class="btn-icon-info icon-only-info" style="pointer-events:none; margin-left: 6px; vertical-align: middle; display: ${exibirHistorico ? 'none' : 'inline-flex'};" title="Contém histórico">i</span>
                 <div class="desc-gasto-linha" style="display: ${exibirHistorico ? 'block' : 'none'}; font-size: 11.5px; color: var(--ink-2); margin-top: 6px; padding: 7px 10px; background: var(--info-pale); border: 1px solid #cce5f0; border-radius: 6px; font-weight: 500; line-height: 1.4;">
@@ -1697,32 +1731,6 @@
         }
     });
 
-    window.abrirModal = function(idDocumento) { document.getElementById('nf-id-modal').value = idDocumento; document.getElementById('data-recebimento-modal').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-data').style.display = 'flex'; };
-    window.fecharModal = function() { document.getElementById('modal-data').style.display = 'none'; };
-
-    window.confirmarRecebimento = async function() {
-        const idDoc = document.getElementById('nf-id-modal').value;
-        const dataInput = document.getElementById('data-recebimento-modal').value;
-        if(!dataInput) return;
-        if(isMesBloqueadoVerificacao(dataInput)) { alert("Não é possível liquidar título em período já encerrado na contabilidade!"); return; }
-        try {
-            await updateDoc(doc(db, "notasFiscais", idDoc), { status: 'pago', dataRecebimento: dataInput });
-            const nfIndex = notasFiscais.findIndex(n => n.id === idDoc);
-            if(nfIndex !== -1) { notasFiscais[nfIndex].status = 'pago'; notasFiscais[nfIndex].dataRecebimento = dataInput; }
-            fecharModal(); atualizarDashboardPrincipal(); renderizarNF();
-        } catch(e) { console.error(e); }
-    };
-
-    window.excluirNF = async function(idDoc, dataRef) { 
-        if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
-        if(confirm('Confirmar exclusão deste registro?')) { await deleteDoc(doc(db, "notasFiscais", idDoc)); notasFiscais = notasFiscais.filter(n => n.id !== idDoc); atualizarDashboardPrincipal(); renderizarNF(); } 
-    };
-
-    window.excluirGasto = async function(idDoc, dataRef) { 
-        if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
-        if(confirm('Confirmar exclusão da despesa?')) { await deleteDoc(doc(db, "gastos", idDoc)); gastos = gastos.filter(g => g.id !== idDoc); atualizarDashboardPrincipal(); window.renderizarGastos(); } 
-    };
-
     window.mudarTipoVisao = function() {
         const tipo = document.getElementById('tipo-visao').value;
         const filtroMesInput = document.getElementById('filtro-mes');
@@ -1776,21 +1784,14 @@
         let arrGastos = Object.keys(gastosPorCategoria).map((key, index) => { return { cat: key, val: gastosPorCategoria[key], color: corBase[index % corBase.length] }; });
         arrGastos = arrGastos.filter(item => item.val > 0); arrGastos.sort((a, b) => b.val - a.val);
 
-        // Removemos as "Entradas" dos gráficos da Visão Mensal (apenas Despesas renderizadas)
         const categoriasNomes = [...arrGastos.map(item => item.cat)]; 
         const valoresGrafico = [...arrGastos.map(item => item.val)]; 
         const cores = [...arrGastos.map(item => item.color)];
         
-        // Exibir Grid dos extras na visão mês
         document.getElementById('grid-graficos-extras').style.display = 'grid';
 
-        // 1. Gráfico Original (Colunas)
         desenharGraficoMaster('graficoResultados', 'bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Detalhamento de Saídas - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true, 'x');
-
-        // 2. Gráfico Horizontal
         desenharGraficoMaster('graficoHorizontal', 'bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Comparativo de Despesas - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true, 'y');
-
-        // 3. Gráfico de Pizza
         desenharGraficoMaster('graficoPizza', 'pie', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores }], `Proporção por Despesa - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true);
     }
 
@@ -1805,28 +1806,19 @@
         document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
         document.getElementById('res-liquido').innerText = formatarMoeda(totalEntradas - totalSaidas); document.getElementById('res-liquido').className = (totalEntradas - totalSaidas) < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
 
-        // Exibir Grid dos extras na visão ano
         document.getElementById('grid-graficos-extras').style.display = 'grid';
 
         const labelsMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        // Na visão anual é mantido Entrada e Saída
         const dataSetsAnual = [ { label: 'Receitas', data: entradasMes, backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Despesas', data: saidasMes, backgroundColor: '#ef4444', borderRadius: 4 } ];
 
-        // 1. Gráfico Original
         desenharGraficoMaster('graficoResultados', 'bar', labelsMeses, dataSetsAnual, `Exercício - ${ano}`, false, 'x');
-
-        // 2. Gráfico Horizontal
         desenharGraficoMaster('graficoHorizontal', 'bar', labelsMeses, dataSetsAnual, `Exercício Horizontal - ${ano}`, false, 'y');
-
-        // 3. Gráfico Pizza (Mostra o balanço total Anual)
         desenharGraficoMaster('graficoPizza', 'pie', ['Total Receitas', 'Total Despesas'], [{ label: 'Acumulado (R$)', data: [totalEntradas, totalSaidas], backgroundColor: ['#10b981', '#ef4444'] }], `Balanço Geral Anual - ${ano}`, true);
     }
 
-    // FUNÇÃO MASTER PARA DESENHAR OS 3 GRÁFICOS
     function desenharGraficoMaster(canvasId, tipo, labels, datasets, titulo, showLabels, indexAxis = 'x') {
         const ctx = document.getElementById(canvasId).getContext('2d');
 
-        // Destruir instâncias anteriores
         if (canvasId === 'graficoResultados' && graficoInstancia) graficoInstancia.destroy();
         if (canvasId === 'graficoHorizontal' && typeof graficoHorizInstancia !== 'undefined' && graficoHorizInstancia) graficoHorizInstancia.destroy();
         if (canvasId === 'graficoPizza' && typeof graficoPizzaInstancia !== 'undefined' && graficoPizzaInstancia) graficoPizzaInstancia.destroy();
@@ -1834,7 +1826,6 @@
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = '#64748b';
 
-        // Configuração dos Rótulos (Valores Avista) - Removido no Pizza!
         const datalabelsConfig = showLabels ? {
             display: tipo === 'pie' ? false : true, 
             color: '#718096',
@@ -1874,13 +1865,11 @@
 
         const novaInstancia = new Chart(ctx, config);
 
-        // Salva a referência
         if (canvasId === 'graficoResultados') graficoInstancia = novaInstancia;
         if (canvasId === 'graficoHorizontal') graficoHorizInstancia = novaInstancia;
         if (canvasId === 'graficoPizza') graficoPizzaInstancia = novaInstancia;
     }
 
-    // --- NOVA LÓGICA DE GRÁFICOS VINCULADOS ---
     window.renderizarGraficosVinculos = function() {
         const catSelecionada = document.getElementById('filtro-cat-vinculada').value;
         const gridVinculos = document.getElementById('grid-vinculos');
@@ -1932,7 +1921,6 @@
 
         const paletaCores = ['#087b79', '#c8ed74', '#318eb4', '#8063c9', '#de5b5b', '#d89433', '#1aa878', '#49c8df', '#13212f', '#9aabbb'];
 
-        // GRÁFICO DE VEÍCULOS
         if (categoria.pedeVeiculo) {
             wrapVeiculos.style.display = 'flex';
             let agVeiculos = {};
@@ -1974,7 +1962,6 @@
             });
         } else { wrapVeiculos.style.display = 'none'; }
 
-        // GRÁFICO DE FUNCIONÁRIOS
         if (categoria.pedeFuncionario) {
             wrapFuncs.style.display = 'flex';
             let agFuncs = {};
