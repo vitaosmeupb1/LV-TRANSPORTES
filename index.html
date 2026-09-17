@@ -179,10 +179,10 @@
     .btn-excel { color: #fff; background: var(--ink); }
     .btn-excel:hover { background: var(--brand-dark); box-shadow: 0 7px 15px rgba(18,167,162,.18); }
     .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
-    .section-heading h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; letter-spacing: -.5px; }
-    .section-heading p { color: var(--muted); font-size: 11px; }
+    .section-heading h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; letter-spacing: -.5px; color: var(--ink); }
+    .section-heading p { color: var(--muted); font-size: 12px; margin-top: 2px; }
     
-    .filters-panel { display: flex; align-items: flex-end; gap: 12px; padding: 10px 14px; margin-bottom: 12px; }
+    .filters-panel { display: flex; align-items: flex-end; gap: 12px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap; }
     .filter-item { min-width: 175px; display: flex; flex-direction: column; gap: 5px; }
     .filter-item label { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
     .filter-item .form-control { min-height: 38px; padding: 8px 11px; }
@@ -218,7 +218,8 @@
     .btn-cancel-edit { min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink-2); font-weight: 700; cursor: pointer; transition: all .2s; }
     .btn-cancel-edit:hover { background: var(--surface-soft); border-color: var(--line-strong); }
 
-    .table-responsive { overflow: auto; max-height: 500px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    /* Tabela Ajustada para crescer naturalmente com a página */
+    .table-responsive { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-bottom: 30px; box-shadow: var(--shadow-sm); }
     table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; min-width: 580px; }
     th { padding: 12px 15px; color: var(--muted); background: #f7fafb; border-bottom: 1px solid var(--line); font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
     td { padding: 14px 15px; color: var(--ink-2); border-bottom: 1px solid #edf2f4; font-size: 13px; vertical-align: middle; }
@@ -425,12 +426,10 @@
                     <button id="nav-config" class="nav-item" onclick="window.mudarTela('view-config', this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.6-1H6v-2.6h.4A1.7 1.7 0 0 0 8 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2H15V5a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2V14H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></span><span>Cadastros</span></button>
                 </nav>
                 <div class="sidebar-footer">
-                    <!-- Configuração de Competência Movida para a Sidebar -->
                     <div class="sidebar-period-config">
                         <label>Competência de Trabalho</label>
                         <input type="month" id="filtro-mes-lancamento" aria-hidden="true" tabindex="-1" style="position: absolute; opacity: 0; width: 1px; pointer-events: none;">
                         <div class="spc-row">
-                            <!-- BOTÃO UNIFICADO MÊS + ANO -->
                             <button type="button" class="spc-btn" id="btn-abrir-modal-mes" onclick="window.abrirModalMes()">
                                 <span id="mes-selecionado-texto">Carregando...</span>
                                 <span id="mes-selecionado-lock" style="font-size: 11px;"></span>
@@ -552,7 +551,7 @@
                     <!-- ENTRADAS -->
                     <div id="view-entradas" class="view">
                         <div class="content-intro"><div><div class="eyebrow">Movimento financeiro</div><h1>Lançar entradas</h1><p>Registe notas fiscais e acompanhe os recebimentos da competência.</p></div></div>
-                        <div class="entry-card">
+                        <div class="entry-card" style="margin-bottom: 20px;">
                             <div class="entry-header"><div><h2>Notas fiscais</h2><p>Inclua novas receitas no controlo financeiro.</p></div><div class="totalizador-destaque total-entrada">Total da competência: <span id="total-entradas-tab">R$ 0,00</span></div></div>
                             <div class="entry-body">
                                 <form id="form-nf">
@@ -561,17 +560,24 @@
                                         <div><label class="field-label" for="nf-valor">Valor da receita</label><input type="text" inputmode="numeric" id="nf-valor" class="form-control" placeholder="R$ 0,00" oninput="window.mascaraMoeda(event)" required></div>
                                     </div>
                                     <div class="form-row"><div><label class="field-label" for="nf-cliente">Tomador / cliente</label><input type="text" id="nf-cliente" class="form-control" placeholder="Nome do cliente" required oninput="this.value = this.value.toUpperCase()"></div></div>
-                                    <button type="submit" id="btn-submit-nf" class="btn-submit">Processar receita</button>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="submit" id="btn-submit-nf" class="btn-submit" style="flex:1;">Processar receita</button>
+                                        <button type="button" id="btn-cancel-nf" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('nf')">Cancelar Edição</button>
+                                    </div>
                                 </form>
-                                <div class="table-responsive" style="margin-top: 26px;"><table><thead><tr><th>NF / cliente</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tabela-nf"></tbody></table></div>
                             </div>
+                        </div>
+                        
+                        <div class="section-heading"><div><h2>Recebimentos Lançados</h2><p>Listagem de receitas da competência.</p></div></div>
+                        <div class="table-responsive">
+                            <table><thead><tr><th>NF / cliente</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tabela-nf"></tbody></table>
                         </div>
                     </div>
 
                     <!-- SAÍDAS -->
                     <div id="view-saidas" class="view">
                         <div class="content-intro"><div><div class="eyebrow">Movimento financeiro</div><h1>Lançar saídas</h1><p>Registe custos, históricos e categorias da competência selecionada.</p></div></div>
-                        <div class="entry-card">
+                        <div class="entry-card" style="margin-bottom: 20px;">
                             <div class="entry-header"><div><h2>Despesas operacionais</h2><p>Organize cada saída com precisão.</p></div><div class="totalizador-destaque total-saida">Total da competência: <span id="total-saidas-tab">R$ 0,00</span></div></div>
                             <div class="entry-body">
                                 <form id="form-gasto">
@@ -595,10 +601,34 @@
                                         <div><label class="field-label" for="gasto-desc">Histórico</label><input type="text" id="gasto-desc" class="form-control" placeholder="Opcional" oninput="this.value = this.value.toUpperCase()"></div>
                                         <div><label class="field-label" for="gasto-valor">Valor da despesa</label><input type="text" inputmode="numeric" id="gasto-valor" class="form-control" placeholder="R$ 0,00" oninput="window.mascaraMoeda(event)" required></div>
                                     </div>
-                                    <button type="submit" id="btn-submit-gasto" class="btn-submit">Processar despesa</button>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="submit" id="btn-submit-gasto" class="btn-submit" style="flex:1;">Processar despesa</button>
+                                        <button type="button" id="btn-cancel-gasto" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('gasto')">Cancelar Edição</button>
+                                    </div>
                                 </form>
-                                <div class="table-responsive" style="margin-top: 26px;"><table><thead><tr><th onclick="window.ordenarGastos('categoria')" class="sortable">Categoria ↕</th><th onclick="window.ordenarGastos('data')" class="sortable">Data ↕</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-gastos"></tbody></table></div>
                             </div>
+                        </div>
+
+                        <div class="section-heading" style="margin-bottom: 12px;"><div><h2>Despesas Lançadas</h2><p>Listagem de custos da competência.</p></div></div>
+                        
+                        <!-- FLAG GLOBAL E FILTRO DE CATEGORIA NA TABELA -->
+                        <div class="filters-panel" style="margin-bottom: 16px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                            <div class="filter-item" style="min-width: 250px;">
+                                <label for="filtro-tabela-categoria">Filtrar por Categoria Específica</label>
+                                <select id="filtro-tabela-categoria" class="form-control" onchange="window.renderizarGastos()">
+                                    <option value="">Todas as categorias</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; padding-bottom: 10px;">
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="toggle-historico-global" onchange="window.toggleHistoricoGlobal()">
+                                    Exibir todos os históricos
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table><thead><tr><th onclick="window.ordenarGastos('categoria')" class="sortable">Categoria ↕</th><th onclick="window.ordenarGastos('data')" class="sortable">Data ↕</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-gastos"></tbody></table>
                         </div>
                     </div>
 
@@ -632,7 +662,7 @@
                                             <button type="button" id="btn-cancel-cat" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('categoria')">Cancelar Edição</button>
                                         </div>
                                     </form>
-                                    <div class="table-responsive" style="margin-top: 25px;">
+                                    <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
                                             <thead><tr><th>Nome da categoria</th><th>Vínculos</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-categorias"></tbody>
@@ -658,7 +688,7 @@
                                             <button type="button" id="btn-cancel-veiculo" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('veiculo')">Cancelar Edição</button>
                                         </div>
                                     </form>
-                                    <div class="table-responsive" style="margin-top: 25px;">
+                                    <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
                                             <thead><tr><th>Marca / modelo</th><th>Placa</th><th>Cor</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-veiculos"></tbody>
@@ -683,7 +713,7 @@
                                             <button type="button" id="btn-cancel-funcionario" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('funcionario')">Cancelar Edição</button>
                                         </div>
                                     </form>
-                                    <div class="table-responsive" style="margin-top: 25px;">
+                                    <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
                                             <thead><tr><th>Nome Completo</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-funcionarios"></tbody>
@@ -699,7 +729,6 @@
     </div>
 
     <!-- MODAIS -->
-    <!-- Atualizado com a Seleção de Ano -->
     <div class="modal-overlay" id="modal-meses">
         <div class="modal-content" style="width: min(450px, 100%);">
             <h3>Competência</h3>
@@ -731,8 +760,7 @@
     </div>
     
     <div class="modal-overlay" id="modal-data"><div class="modal-content"><h3>Liquidar fatura</h3><p>Informe a data em que o recurso entrou na conta corrente.</p><input type="date" id="data-recebimento-modal" class="form-control" required><input type="hidden" id="nf-id-modal"><div class="modal-actions"><button class="btn-cancel" onclick="window.fecharModal()">Cancelar</button><button class="btn-confirm" onclick="window.confirmarRecebimento()">Efetivar recebimento</button></div></div></div>
-    <div class="modal-overlay" id="modal-descricao"><div class="modal-content"><h3>Histórico da despesa</h3><p id="texto-descricao-modal" style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 500;"></p><div class="modal-actions"><button class="btn-cancel" style="width: 100%;" onclick="window.fecharModalDescricao()">Fechar</button></div></div></div>
-
+    
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -819,7 +847,6 @@
     document.getElementById('filtro-mes').value = mesAtualDefault;
     document.getElementById('filtro-mes-lancamento').value = mesAtualDefault;
 
-    // Atualizado: Seta o modal de acordo com o ano ativo e renderiza
     window.abrirModalMes = function() {
         const hidden = document.getElementById('filtro-mes-lancamento').value;
         if (hidden) {
@@ -913,6 +940,15 @@
             categoriasDB.forEach(cat => { selectCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
         }
 
+        // ALIMENTAR O NOVO FILTRO DA TABELA DE SAÍDAS
+        const selectFiltroCat = document.getElementById('filtro-tabela-categoria');
+        if(selectFiltroCat) {
+            const valAntigo = selectFiltroCat.value;
+            selectFiltroCat.innerHTML = '<option value="">Todas as categorias</option>';
+            categoriasDB.forEach(cat => { selectFiltroCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            selectFiltroCat.value = valAntigo; 
+        }
+
         const tbodyConf = document.getElementById('tabela-categorias');
         if(tbodyConf) {
             tbodyConf.innerHTML = '';
@@ -993,7 +1029,6 @@
         }
     }
 
-    // Atualizado para pegar o select do modal em vez do menu lateral
     function preencherAnosCompetencia() {
         const selectAno = document.getElementById('ano-competencia-modal');
         if (!selectAno) return;
@@ -1029,13 +1064,11 @@
         const lockTrigger = document.getElementById('mes-selecionado-lock');
         const btnTrigger = document.getElementById('btn-abrir-modal-mes');
 
-        // Mostra Mês e Ano juntos no botão
         if(textoTrigger) textoTrigger.textContent = `${mesTexto} ${ano}`;
         if(lockTrigger) lockTrigger.textContent = isFechadoTrigger ? '🔒' : '🔓';
         if(btnTrigger) btnTrigger.classList.toggle('is-closed', isFechadoTrigger);
     }
 
-    // Função NOVA: Atualiza a preview de cadeados/ativo apenas enquanto navega no modal
     window.atualizarMesesNoModal = function() {
         const anoSelecionado = document.getElementById('ano-competencia-modal').value;
         const hidden = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
@@ -1056,7 +1089,6 @@
         });
     };
 
-    // Pega o ano do modal agora, em vez de pegar da sidebar
     window.selecionarMesCompetencia = function(mes) {
         const ano = document.getElementById('ano-competencia-modal')?.value || new Date().getFullYear().toString();
         document.getElementById('filtro-mes-lancamento').value = `${ano}-${mes}`;
@@ -1126,9 +1158,23 @@
         if (panel) panel.classList.add('active');
     };
 
-    // ----- LÓGICA DE EDIÇÃO E CANCELAMENTO DE CADASTROS -----
     window.cancelarEdicao = function(tipo) {
-        if(tipo === 'categoria') {
+        if(tipo === 'nf') {
+            const form = document.getElementById('form-nf');
+            delete form.dataset.editId;
+            form.reset();
+            document.getElementById('btn-submit-nf').innerText = "Processar receita";
+            document.getElementById('btn-cancel-nf').style.display = "none";
+        }
+        else if(tipo === 'gasto') {
+            const form = document.getElementById('form-gasto');
+            delete form.dataset.editId;
+            form.reset();
+            window.verificarVinculosCategoria();
+            document.getElementById('btn-submit-gasto').innerText = "Processar despesa";
+            document.getElementById('btn-cancel-gasto').style.display = "none";
+        }
+        else if(tipo === 'categoria') {
             const form = document.getElementById('form-categoria');
             delete form.dataset.editId;
             form.reset();
@@ -1149,6 +1195,43 @@
             form.querySelector('.btn-submit').innerText = "Adicionar funcionário";
             document.getElementById('btn-cancel-funcionario').style.display = "none";
         }
+    };
+
+    window.editarNF = function(id) {
+        const nf = notasFiscais.find(n => n.id === id);
+        if(!nf) return;
+
+        document.getElementById('nf-numero').value = nf.numero;
+        document.getElementById('nf-valor').value = formatarMoeda(nf.valor);
+        document.getElementById('nf-cliente').value = nf.cliente;
+        
+        const form = document.getElementById('form-nf');
+        form.dataset.editId = id;
+        document.getElementById('btn-submit-nf').innerText = "Atualizar receita";
+        document.getElementById('btn-cancel-nf').style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.editarGasto = function(id, dataRef) {
+        if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
+        const g = gastos.find(x => x.id === id);
+        if(!g) return;
+        
+        document.getElementById('gasto-categoria').value = g.categoria;
+        document.getElementById('gasto-data').value = g.data;
+        document.getElementById('gasto-desc').value = g.descricao || '';
+        document.getElementById('gasto-valor').value = formatarMoeda(g.valor);
+        
+        window.verificarVinculosCategoria(); 
+        
+        if(g.veiculo) document.getElementById('gasto-veiculo').value = g.veiculo;
+        if(g.funcionario) document.getElementById('gasto-funcionario').value = g.funcionario;
+        
+        const form = document.getElementById('form-gasto');
+        form.dataset.editId = id;
+        document.getElementById('btn-submit-gasto').innerText = "Atualizar despesa";
+        document.getElementById('btn-cancel-gasto').style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.editarCategoria = function(id) {
@@ -1191,7 +1274,6 @@
         document.getElementById('btn-cancel-funcionario').style.display = "block";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-    // ---------------------------------------------------------
 
     document.getElementById('form-categoria').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -1345,7 +1427,7 @@
 
         atualizarCompetenciaVisual();
         renderizarNF();
-        renderizarGastos();
+        window.renderizarGastos();
         atualizarDashboardPrincipal();
     };
 
@@ -1437,7 +1519,8 @@
             let botoesAcao = '';
             if (!estaBloqueado) {
                 const btnReceber = nf.status === 'pendente' ? `<button type="button" class="btn-icon btn-icon-success" onclick="window.abrirModal('${nf.id}')" title="Baixar Título">✓</button>` : '';
-                botoesAcao = `<div class="action-flex">${btnReceber} <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirNF('${nf.id}', '${nf.status === 'pago' ? nf.dataRecebimento : (nf.dataLancamento || '')}')" title="Excluir">${iconTrash}</button></div>`;
+                const btnEditar = `<button type="button" class="btn-icon btn-icon-edit" onclick="window.editarNF('${nf.id}')" title="Editar">${iconEdit}</button>`;
+                botoesAcao = `<div class="action-flex">${btnReceber} ${btnEditar} <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirNF('${nf.id}', '${nf.status === 'pago' ? nf.dataRecebimento : (nf.dataLancamento || '')}')" title="Excluir">${iconTrash}</button></div>`;
             } else { botoesAcao = '<span style="color:var(--text-muted); font-size:11px;">Bloqueado</span>'; }
             tr.innerHTML = `<td><strong>${nf.numero}</strong><br><span style="font-size:11px; color:var(--text-muted);">${nf.cliente}</span></td><td style="font-weight:600;">${formatarMoeda(nf.valor)}</td><td>${statusBadge}<br><span style="font-size:10px; color:var(--text-muted);">${nf.status === 'pago' ? formatarData(nf.dataRecebimento) : '-'}</span></td><td>${botoesAcao}</td>`;
             tbody.appendChild(tr);
@@ -1448,16 +1531,37 @@
 
     window.ordenarGastos = function(coluna) {
         if (sortByGastos === coluna) { sortAscGastos = !sortAscGastos; } else { sortByGastos = coluna; sortAscGastos = true; }
-        renderizarGastos();
+        window.renderizarGastos();
     };
 
-    function renderizarGastos() {
+    window.toggleHistoricoGlobal = function() {
+        const isChecked = document.getElementById('toggle-historico-global').checked;
+        document.querySelectorAll('.desc-gasto-linha').forEach(el => {
+            el.style.display = isChecked ? 'block' : 'none';
+        });
+        document.querySelectorAll('.icon-only-info').forEach(el => {
+            el.style.display = isChecked ? 'none' : 'inline-flex';
+        });
+    };
+
+    window.renderizarGastos = function() {
         const tbody = document.getElementById('tabela-gastos'); tbody.innerHTML = '';
         const mesFiltro = document.getElementById('filtro-mes-lancamento').value;
         const estaBloqueado = isMesBloqueadoVerificacao(mesFiltro);
-        let somaSaidas = 0;
+        
+        // Mantém a soma de *TODAS* as saídas do mês para o card principal
+        let somaSaidasGeral = 0;
+        let todosGastosDoMes = gastos.filter(gasto => gasto.data && gasto.data.startsWith(mesFiltro));
+        todosGastosDoMes.forEach(g => somaSaidasGeral += parseFloat(g.valor));
+        document.getElementById('total-saidas-tab').innerText = formatarMoeda(somaSaidasGeral);
 
-        let gastosFiltrados = gastos.filter(gasto => gasto.data && gasto.data.startsWith(mesFiltro));
+        // Aplica o filtro de Tabela se houver
+        const filtroCat = document.getElementById('filtro-tabela-categoria')?.value;
+        let gastosFiltrados = todosGastosDoMes;
+        if (filtroCat) {
+            gastosFiltrados = gastosFiltrados.filter(g => g.categoria === filtroCat);
+        }
+
         gastosFiltrados.sort((a, b) => {
             let valorA, valorB;
             if (sortByGastos === 'categoria') { valorA = (a.categoria || '').toLowerCase(); valorB = (b.categoria || '').toLowerCase(); } 
@@ -1467,30 +1571,37 @@
             return 0;
         });
 
+        const exibirHistorico = document.getElementById('toggle-historico-global')?.checked || false;
+
         gastosFiltrados.forEach((gasto) => {
-            somaSaidas += parseFloat(gasto.valor);
             const tr = document.createElement('tr');
             
             let htmlVinculo = '';
             if(gasto.veiculo) htmlVinculo += `<span class="tag-vinculo">🚗 ${gasto.veiculo}</span>`;
             if(gasto.funcionario) htmlVinculo += `<span class="tag-vinculo">👤 ${gasto.funcionario}</span>`;
 
-            let btnInfo = '';
+            let htmlDesc = '';
             if (gasto.descricao && gasto.descricao.trim() !== '') {
-                const descEscapada = gasto.descricao.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                btnInfo = `<button type="button" class="btn-icon-info" onclick="window.mostrarDescricao('${descEscapada}')" title="Ver Histórico">i</button>`;
+                const descSegura = gasto.descricao.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                htmlDesc = `
+                <span class="btn-icon-info icon-only-info" style="pointer-events:none; margin-left: 6px; vertical-align: middle; display: ${exibirHistorico ? 'none' : 'inline-flex'};" title="Contém histórico">i</span>
+                <div class="desc-gasto-linha" style="display: ${exibirHistorico ? 'block' : 'none'}; font-size: 11.5px; color: var(--ink-2); margin-top: 6px; padding: 7px 10px; background: var(--info-pale); border: 1px solid #cce5f0; border-radius: 6px; font-weight: 500; line-height: 1.4;">
+                    ${descSegura}
+                </div>
+                `;
             }
             
             let btnExcluir = '';
-            if (!estaBloqueado) { btnExcluir = `<button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirGasto('${gasto.id}', '${gasto.data}')">${iconTrash}</button>`; } 
+            if (!estaBloqueado) { 
+                const btnEditar = `<button type="button" class="btn-icon btn-icon-edit" onclick="window.editarGasto('${gasto.id}', '${gasto.data}')" title="Editar">${iconEdit}</button>`;
+                btnExcluir = `${btnEditar} <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirGasto('${gasto.id}', '${gasto.data}')" title="Excluir">${iconTrash}</button>`; 
+            } 
             else { btnExcluir = '<span style="color:var(--text-muted); font-size:11px;">Bloqueado</span>'; }
             
-            tr.innerHTML = `<td><strong>${gasto.categoria}</strong> ${btnInfo}<br>${htmlVinculo}</td><td style="font-size:12px;">${formatarData(gasto.data)}</td><td style="font-weight:600;">${formatarMoeda(gasto.valor)}</td><td><div class="action-flex">${btnExcluir}</div></td>`;
+            tr.innerHTML = `<td><strong>${gasto.categoria}</strong> ${htmlDesc}<br>${htmlVinculo}</td><td style="font-size:12px;">${formatarData(gasto.data)}</td><td style="font-weight:600;">${formatarMoeda(gasto.valor)}</td><td><div class="action-flex">${btnExcluir}</div></td>`;
             tbody.appendChild(tr);
         });
-
-        document.getElementById('total-saidas-tab').innerText = formatarMoeda(somaSaidas);
-    }
+    };
 
     document.getElementById('form-nf').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -1502,13 +1613,38 @@
 
         if (valorNumerico <= 0) { alert("Por favor, digite um valor válido maior que zero."); return; }
 
-        const novaNF = { 
-            numero: document.getElementById('nf-numero').value, 
-            cliente: document.getElementById('nf-cliente').value.toUpperCase(), 
-            valor: valorNumerico, 
-            status: 'pendente', dataLancamento: mesFiltroAtual + "-01" 
-        };
-        try { const docRef = await addDoc(collection(db, "notasFiscais"), novaNF); novaNF.id = docRef.id; notasFiscais.push(novaNF); this.reset(); atualizarDashboardPrincipal(); renderizarNF(); } catch(e) { console.error(e); }
+        const editId = this.dataset.editId;
+
+        if (editId) {
+            const updateObj = {
+                numero: document.getElementById('nf-numero').value, 
+                cliente: document.getElementById('nf-cliente').value.toUpperCase(), 
+                valor: valorNumerico
+            };
+            try {
+                await updateDoc(doc(db, "notasFiscais", editId), updateObj);
+                const nfIndex = notasFiscais.findIndex(n => n.id === editId);
+                if(nfIndex !== -1) { notasFiscais[nfIndex] = { ...notasFiscais[nfIndex], ...updateObj }; }
+                window.cancelarEdicao('nf');
+                atualizarDashboardPrincipal(); 
+                renderizarNF();
+            } catch(err) { console.error(err); }
+        } else {
+            const novaNF = { 
+                numero: document.getElementById('nf-numero').value, 
+                cliente: document.getElementById('nf-cliente').value.toUpperCase(), 
+                valor: valorNumerico, 
+                status: 'pendente', dataLancamento: mesFiltroAtual + "-01" 
+            };
+            try { 
+                const docRef = await addDoc(collection(db, "notasFiscais"), novaNF); 
+                novaNF.id = docRef.id; 
+                notasFiscais.push(novaNF); 
+                this.reset(); 
+                atualizarDashboardPrincipal(); 
+                renderizarNF(); 
+            } catch(e) { console.error(e); }
+        }
     });
 
     document.getElementById('form-gasto').addEventListener('submit', async function(e) {
@@ -1527,7 +1663,7 @@
         const blocoVDisp = document.getElementById('bloco-veiculo').style.display !== 'none';
         const blocoFDisp = document.getElementById('bloco-funcionario').style.display !== 'none';
 
-        const novoGasto = { 
+        const updateObj = { 
             categoria: document.getElementById('gasto-categoria').value, 
             descricao: document.getElementById('gasto-desc').value.toUpperCase(), 
             valor: valorNumerico, 
@@ -1536,19 +1672,31 @@
             funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null
         };
         
-        try { 
-            const docRef = await addDoc(collection(db, "gastos"), novoGasto); 
-            novoGasto.id = docRef.id; 
-            gastos.push(novoGasto); 
-            this.reset(); 
-            window.verificarVinculosCategoria(); 
-            atualizarDashboardPrincipal(); 
-            renderizarGastos(); 
-        } catch(e) { console.error(e); }
+        const editId = this.dataset.editId;
+
+        if (editId) {
+            try {
+                await updateDoc(doc(db, "gastos", editId), updateObj);
+                const gIndex = gastos.findIndex(g => g.id === editId);
+                if(gIndex !== -1) { gastos[gIndex] = { ...gastos[gIndex], ...updateObj }; }
+                window.cancelarEdicao('gasto');
+                window.verificarVinculosCategoria(); 
+                atualizarDashboardPrincipal(); 
+                window.renderizarGastos();
+            } catch(err) { console.error(err); }
+        } else {
+            try { 
+                const docRef = await addDoc(collection(db, "gastos"), updateObj); 
+                updateObj.id = docRef.id; 
+                gastos.push(updateObj); 
+                this.reset(); 
+                window.verificarVinculosCategoria(); 
+                atualizarDashboardPrincipal(); 
+                window.renderizarGastos(); 
+            } catch(e) { console.error(e); }
+        }
     });
 
-    window.mostrarDescricao = function(desc) { document.getElementById('texto-descricao-modal').innerText = desc; document.getElementById('modal-descricao').style.display = 'flex'; };
-    window.fecharModalDescricao = function() { document.getElementById('modal-descricao').style.display = 'none'; };
     window.abrirModal = function(idDocumento) { document.getElementById('nf-id-modal').value = idDocumento; document.getElementById('data-recebimento-modal').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-data').style.display = 'flex'; };
     window.fecharModal = function() { document.getElementById('modal-data').style.display = 'none'; };
 
@@ -1572,7 +1720,7 @@
 
     window.excluirGasto = async function(idDoc, dataRef) { 
         if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
-        if(confirm('Confirmar exclusão da despesa?')) { await deleteDoc(doc(db, "gastos", idDoc)); gastos = gastos.filter(g => g.id !== idDoc); atualizarDashboardPrincipal(); renderizarGastos(); } 
+        if(confirm('Confirmar exclusão da despesa?')) { await deleteDoc(doc(db, "gastos", idDoc)); gastos = gastos.filter(g => g.id !== idDoc); atualizarDashboardPrincipal(); window.renderizarGastos(); } 
     };
 
     window.mudarTipoVisao = function() {
@@ -1688,7 +1836,7 @@
 
         // Configuração dos Rótulos (Valores Avista) - Removido no Pizza!
         const datalabelsConfig = showLabels ? {
-            display: tipo === 'pie' ? false : true, // <--- Aqui garante que não exiba na Pizza.
+            display: tipo === 'pie' ? false : true, 
             color: '#718096',
             font: { weight: 'bold', size: 10 },
             formatter: function(value) {
@@ -1721,7 +1869,7 @@
                     padding: (showLabels && tipo !== 'pie') ? { top: 25, right: indexAxis === 'y' ? 70 : 25 } : 0
                 }
             },
-            plugins: [ChartDataLabels] // Plugin injetado globalmente pela biblioteca acima
+            plugins: [ChartDataLabels] 
         };
 
         const novaInstancia = new Chart(ctx, config);
@@ -1818,7 +1966,7 @@
                     plugins: { 
                         legend: { display: tipoGrafico === 'doughnut', position: 'right' }, 
                         title: { display: true, text: `Por Veículo (${periodoTexto})`, font: { size: 14 } },
-                        datalabels: { display: false } // Remove Datalabels extra from sub-charts
+                        datalabels: { display: false }
                     }, 
                     cutout: tipoGrafico === 'doughnut' ? '65%' : undefined,
                     scales: tipoGrafico === 'bar' ? { y: { beginAtZero: true }, x: { grid: { display: false } } } : undefined
@@ -1860,7 +2008,7 @@
                     plugins: { 
                         legend: { display: tipoGrafico === 'doughnut', position: 'right' }, 
                         title: { display: true, text: `Por Funcionário (${periodoTexto})`, font: { size: 14 } },
-                        datalabels: { display: false } // Remove Datalabels extra from sub-charts
+                        datalabels: { display: false }
                     }, 
                     cutout: tipoGrafico === 'doughnut' ? '65%' : undefined,
                     scales: tipoGrafico === 'bar' ? { y: { beginAtZero: true }, x: { grid: { display: false } } } : undefined
