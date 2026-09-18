@@ -2,11 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- AJUSTE: Adicionado viewport-fit=cover para preencher a tela inteira (notch e status bar) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LV Transportes — Gestão Financeira</title>
     
     <!-- Meta Tags para PWA e Instalação Mobile -->
-    <meta name="theme-color" content="#12a7a2">
+    <!-- AJUSTE: Cor do tema alterada para combinar com o fundo escuro do topo e login -->
+    <meta name="theme-color" content="#0f202b">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,9 +23,9 @@
             name: "LV Transportes",
             short_name: "LV Transp",
             start_url: window.location.href,
-            display: "standalone",
+            display: "fullscreen", // AJUSTE: Alterado de "standalone" para "fullscreen" para remover a barra
             background_color: "#0f202b",
-            theme_color: "#12a7a2",
+            theme_color: "#0f202b", // AJUSTE: Cor do tema para o PWA
             icons: [{ src: "icon.png", sizes: "192x192 512x512", type: "image/png", purpose: "any maskable" }]
         };
         const manifestStr = encodeURIComponent(JSON.stringify(manifest));
@@ -355,8 +357,13 @@
         .sidebar { width: 100%; height: auto !important; max-height: none !important; min-height: 0; position: relative; padding: 12px 12px 10px; overflow: visible !important; transform: none !important; }
         .sidebar-brand { padding: 5px 8px 12px; }
         .sidebar-section-label { display: none; }
-        .sidebar-nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 4px; padding-top: 10px; }
-        .nav-item { min-width: max-content; width: auto; min-height: 40px; padding: 9px 11px; font-size: 12px; }
+        
+        /* AJUSTE: Navegação scrollável no mobile arrumada para não cortar e esconder o scroll nativo */
+        .sidebar-nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 8px; padding: 10px 12px 5px 12px; margin: 0 -12px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
+        /* AJUSTE: flex-shrink: 0 evita que o item seja esmagado pelo flexbox */
+        .nav-item { min-width: max-content; width: auto; min-height: 40px; padding: 9px 12px; font-size: 13px; flex-shrink: 0; }
+        
         .nav-item.active { box-shadow: inset 0 -3px 0 var(--lime); }
         
         .sidebar-footer { padding: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.09); gap: 10px; }
