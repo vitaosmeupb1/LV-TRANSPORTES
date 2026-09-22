@@ -402,7 +402,8 @@
 </head>
 <body>
     <script>
-        if ('serviceWorker' in navigator) {
+        // Verificação segura do Service Worker - Oculta erro de SecurityError caso execute local (file:///)
+        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.getRegistrations().then(regs => {
                     if (regs.length === 0) {
@@ -415,8 +416,23 @@
         }
     </script>
 
-    <!-- LOGIN -->
-    <div id="view-login" class="view active">
+    <!-- SPLASH SCREEN GLOBAL (Previne piscada do login) -->
+    <div id="global-loader" style="position: fixed; inset: 0; background: #0f202b; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease;">
+        <div class="brand-mark" aria-hidden="true" style="width: 64px; height: 64px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(200,237,116,.2); background: var(--lime); color: var(--ink); border-radius: 18px; display: grid; place-items: center;">
+            <svg viewBox="0 0 24 24" style="width: 34px; height: 34px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;"><path d="M3 7.5h11v9H3zM14 11h3.2l3 3v2.5H14z"/><path d="M6.5 16.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM17.5 16.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/><path d="M3 10h3"/></svg>
+        </div>
+        <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; border-color: rgba(255,255,255,.1); border-bottom-color: var(--lime);"></div>
+    </div>
+
+    <!-- TELA DE TRANSIÇÃO (OVERLAY DE CARREGAMENTO PARA PRODUÇÃO) -->
+    <div id="transition-overlay" style="display: none; position: fixed; inset: 0; background: #0f202b; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; color: #fff;">
+        <div class="spinner" style="width: 44px; height: 44px; border-width: 3px; margin-bottom: 22px; border-color: rgba(200,237,116,.15); border-bottom-color: var(--lime);"></div>
+        <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 24px; margin-bottom: 8px; letter-spacing: -0.5px;">Módulo de Produção</h2>
+        <p style="color: rgba(255,255,255,.5); font-size: 13px;">Autenticando e preparando ambiente...</p>
+    </div>
+
+    <!-- LOGIN (Sem a classe active por padrão) -->
+    <div id="view-login" class="view">
         <div class="login-shell">
             <section class="login-visual" aria-label="Apresentação do sistema">
                 <div class="brand-lockup">
@@ -471,6 +487,8 @@
                     <button id="nav-entradas" class="nav-item" onclick="window.mudarTela('view-entradas', this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></span><span>Lançar entradas</span></button>
                     <button id="nav-saidas" class="nav-item" onclick="window.mudarTela('view-saidas', this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20V8M7 13l5-5 5 5"/><path d="M4 4h16"/></svg></span><span>Lançar saídas</span></button>
                     <button id="nav-config" class="nav-item" onclick="window.mudarTela('view-config', this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.6-1H6v-2.6h.4A1.7 1.7 0 0 0 8 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2H15V5a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2V14H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></span><span>Cadastros</span></button>
+                    <!-- BOTÃO DE PRODUÇÃO -->
+                    <button id="nav-producao" class="nav-item" onclick="window.irParaProducao(this)"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span><span>Produção</span></button>
                 </nav>
                 <div class="sidebar-footer">
                     <div class="sidebar-period-config">
@@ -892,6 +910,79 @@
     document.getElementById('filtro-mes').value = mesAtualDefault;
     document.getElementById('filtro-mes-lancamento').value = mesAtualDefault;
 
+    // NOVAS FUNÇÕES: Controles de Modal e Exclusão que estavam faltando
+    window.abrirModal = function(id) {
+        document.getElementById('nf-id-modal').value = id;
+        document.getElementById('data-recebimento-modal').value = new Date().toISOString().split('T')[0];
+        document.getElementById('modal-data').style.display = 'flex';
+    };
+
+    window.fecharModal = function() {
+        document.getElementById('modal-data').style.display = 'none';
+        document.getElementById('nf-id-modal').value = '';
+    };
+
+    window.confirmarRecebimento = async function() {
+        const id = document.getElementById('nf-id-modal').value;
+        const dataRecebimento = document.getElementById('data-recebimento-modal').value;
+        
+        if(!id || !dataRecebimento) { 
+            alert("Por favor, preencha a data de recebimento."); 
+            return; 
+        }
+
+        if(isMesBloqueadoVerificacao(dataRecebimento)) {
+            alert("A data informada pertence a uma competência que já foi encerrada!");
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, "notasFiscais", id), { status: 'pago', dataRecebimento: dataRecebimento });
+            const nfIndex = notasFiscais.findIndex(n => n.id === id);
+            if(nfIndex !== -1) {
+                notasFiscais[nfIndex].status = 'pago';
+                notasFiscais[nfIndex].dataRecebimento = dataRecebimento;
+            }
+            window.fecharModal();
+            atualizarDashboardPrincipal();
+            renderizarNF();
+        } catch(e) {
+            console.error("Erro ao liquidar fatura:", e);
+            alert("Erro ao salvar o recebimento.");
+        }
+    };
+
+    window.excluirNF = async function(id, dataRef) {
+        if(isMesBloqueadoVerificacao(dataRef)) { alert("Operação bloqueada: O período está encerrado!"); return; }
+        if(!confirm("Tem certeza que deseja excluir permanentemente esta entrada?")) return;
+        
+        try {
+            await deleteDoc(doc(db, "notasFiscais", id));
+            notasFiscais = notasFiscais.filter(n => n.id !== id);
+            atualizarDashboardPrincipal();
+            renderizarNF();
+        } catch(e) {
+            console.error("Erro ao excluir NF:", e);
+            alert("Ocorreu um erro ao excluir a nota.");
+        }
+    };
+
+    window.excluirGasto = async function(id, dataRef) {
+        if(isMesBloqueadoVerificacao(dataRef)) { alert("Operação bloqueada: O período está encerrado!"); return; }
+        if(!confirm("Tem certeza que deseja excluir permanentemente esta despesa?")) return;
+        
+        try {
+            await deleteDoc(doc(db, "gastos", id));
+            gastos = gastos.filter(g => g.id !== id);
+            atualizarDashboardPrincipal();
+            window.renderizarGastos();
+        } catch(e) {
+            console.error("Erro ao excluir gasto:", e);
+            alert("Ocorreu um erro ao excluir a despesa.");
+        }
+    };
+    // FIM DAS FUNÇÕES ADICIONADAS
+
     window.abrirModalMes = function() {
         const hidden = document.getElementById('filtro-mes-lancamento').value;
         if (hidden) {
@@ -940,6 +1031,10 @@
             document.getElementById('view-app-main').classList.remove('active');
             document.getElementById('view-login').classList.add('active');
             notasFiscais = []; gastos = []; mesesBloqueados = []; categoriasDB = []; veiculosDB = []; funcionariosDB = [];
+            
+            // Remove a splash screen imediatamente se o usuário não estiver logado
+            const loader = document.getElementById('global-loader');
+            if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 400); }
         }
     });
 
@@ -972,8 +1067,15 @@
             preencherAnosFiltro();
             
             window.mudarTela('view-resultados', document.getElementById('nav-dash'));
-        } catch (error) { console.error(error); } 
-        finally { document.getElementById('loading-indicator').style.display = 'none'; }
+        } catch (error) { 
+            console.error(error); 
+        } finally { 
+            document.getElementById('loading-indicator').style.display = 'none'; 
+            
+            // Remove a splash screen logo após carregar os dados
+            const loader = document.getElementById('global-loader');
+            if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 400); }
+        }
     }
 
     function renderizarListasDeCategorias() {
@@ -1394,23 +1496,18 @@
         } catch (e) { console.error('Erro ao salvar funcionário', e); }
     });
 
-    window.excluirVeiculo = async function(id) {
-        if (!confirm('Confirma a exclusão deste veículo?')) return;
-        try { await deleteDoc(doc(db, 'veiculos', id)); veiculosDB = veiculosDB.filter(item => item.id !== id); renderizarListaVeiculos(); popularSelectsVinculos(); } catch (e) { console.error('Erro ao excluir veículo', e); }
-    };
-
-    window.excluirFuncionario = async function(id) {
-        if (!confirm('Confirma a exclusão deste funcionário?')) return;
-        try { await deleteDoc(doc(db, 'funcionarios', id)); funcionariosDB = funcionariosDB.filter(item => item.id !== id); renderizarListaFuncionarios(); popularSelectsVinculos(); } catch (e) { console.error('Erro ao excluir funcionário', e); }
-    };
-
-    window.excluirCategoria = async function(id) {
-        if(confirm("Tem certeza que deseja excluir esta categoria? Os lançamentos antigos manterão o nome escrito.")) {
-            try {
-                await deleteDoc(doc(db, "categoriasGasto", id));
-                categoriasDB = categoriasDB.filter(c => c.id !== id); renderizarListasDeCategorias();
-            } catch (e) { console.error("Erro ao excluir", e); }
-        }
+    // FUNÇÃO: Transição e redirecionamento para Produção
+    window.irParaProducao = function(botao) {
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        botao.classList.add('active');
+        
+        const overlay = document.getElementById('transition-overlay');
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'reveal 0.3s ease both';
+        
+        setTimeout(() => {
+            window.location.href = 'indexproducao.html';
+        }, 800);
     };
 
     window.mudarTela = function(idTela, botao) {
@@ -1512,7 +1609,6 @@
         const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Diário"); XLSX.writeFile(wb, `Demonstrativo_${mesFiltro}.xlsx`);
     };
 
-    // NOVA FUNÇÃO: GERAR RELATÓRIO HTML EXPORTÁVEL (Totalmente Responsivo)
     window.gerarHTML = function() {
         const btnHtml = document.getElementById('btn-gerar-html');
         const originalText = btnHtml.innerText;
