@@ -341,7 +341,6 @@
         .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     
-    /* ======== AJUSTE PARA MODO MOBILE AQUI ======== */
     @media (max-width: 780px) {
         .layout-collapsed .sidebar { transform: none; }
         .layout-collapsed .main-wrapper { margin-left: 0 !important; }
@@ -361,11 +360,9 @@
         .sidebar-brand { padding: 5px 17px 12px; }
         .sidebar-section-label { display: none; }
         
-        /* Modificado para Permitir Quebra de Linha (Wrap) */
         .sidebar-nav { display: flex; flex-direction: row; flex-wrap: wrap; overflow: visible; gap: 8px; padding: 10px 17px 10px 17px; margin: 0; width: 100%; }
         .sidebar-nav::-webkit-scrollbar { display: none; }
         
-        /* Flex-grow para ocupar bem a largura em linhas */
         .nav-item { white-space: nowrap; flex-grow: 1; flex-basis: 140px; justify-content: center; width: auto; min-height: 40px; padding: 9px 10px; font-size: 13px; }
         .nav-item.active { box-shadow: inset 0 -3px 0 var(--lime); }
         
@@ -395,7 +392,6 @@
         .section-heading { display: block; }
         .section-heading p { margin-top: 5px; }
         
-        /* Modificado para Permitir Quebra de Linha (Wrap) */
         .cadastro-tabs { display: flex; flex-wrap: wrap; gap: 7px; overflow: visible; }
         .cadastro-tabs::-webkit-scrollbar { display: none; }
         .cadastro-tab { flex-grow: 1; flex-basis: 120px; min-width: auto; padding: 10px 15px; white-space: normal; }
@@ -408,7 +404,6 @@
 </head>
 <body>
     <script>
-        // Verificação segura do Service Worker - Oculta erro de SecurityError caso execute local (file:///)
         if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.getRegistrations().then(regs => {
@@ -422,7 +417,7 @@
         }
     </script>
 
-    <!-- SPLASH SCREEN GLOBAL (Previne piscada do login) -->
+    <!-- SPLASH SCREEN GLOBAL -->
     <div id="global-loader" style="position: fixed; inset: 0; background: #0f202b; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease;">
         <div class="brand-mark" aria-hidden="true" style="width: 64px; height: 64px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(200,237,116,.2); background: var(--lime); color: var(--ink); border-radius: 18px; display: grid; place-items: center;">
             <svg viewBox="0 0 24 24" style="width: 34px; height: 34px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;"><path d="M3 7.5h11v9H3zM14 11h3.2l3 3v2.5H14z"/><path d="M6.5 16.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM17.5 16.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/><path d="M3 10h3"/></svg>
@@ -430,14 +425,14 @@
         <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; border-color: rgba(255,255,255,.1); border-bottom-color: var(--lime);"></div>
     </div>
 
-    <!-- TELA DE TRANSIÇÃO (OVERLAY DE CARREGAMENTO PARA PRODUÇÃO) -->
+    <!-- TELA DE TRANSIÇÃO -->
     <div id="transition-overlay" style="display: none; position: fixed; inset: 0; background: #0f202b; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; color: #fff;">
         <div class="spinner" style="width: 44px; height: 44px; border-width: 3px; margin-bottom: 22px; border-color: rgba(200,237,116,.15); border-bottom-color: var(--lime);"></div>
         <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 24px; margin-bottom: 8px; letter-spacing: -0.5px;">Módulo de Produção</h2>
         <p style="color: rgba(255,255,255,.5); font-size: 13px;">Autenticando e preparando ambiente...</p>
     </div>
 
-    <!-- LOGIN (Sem a classe active por padrão) -->
+    <!-- LOGIN -->
     <div id="view-login" class="view">
         <div class="login-shell">
             <section class="login-visual" aria-label="Apresentação do sistema">
@@ -568,6 +563,13 @@
                         </div>
                         
                         <div class="chart-wrapper">
+                            <!-- NOVO FLAG PARA MOSTRAR IGNORADAS NOS GRÁFICOS -->
+                            <div style="position: absolute; top: 12px; right: 22px; z-index: 10;">
+                                <label class="custom-checkbox" style="font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--surface); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line);">
+                                    <input type="checkbox" id="chk-mostrar-ignoradas" onchange="window.renderizarResultados()" style="width: 14px; height: 14px;">
+                                    Incluir ignoradas nos gráficos
+                                </label>
+                            </div>
                             <div class="chart-container"><canvas id="graficoResultados"></canvas></div>
                         </div>
 
@@ -723,19 +725,19 @@
                                                 <label class="field-label" for="nome-categoria">Nome da Categoria</label>
                                                 <input type="text" id="nome-categoria" class="form-control" placeholder="Ex.: MANUTENÇÃO VEICULAR" required oninput="this.value = this.value.toUpperCase()">
                                             </div>
-                                            <div style="display: flex; gap: 20px; align-items: center; padding-top: 15px;">
+                                            <div style="display: flex; gap: 20px; align-items: center; padding-top: 15px; flex-wrap: wrap;">
                                                 <label class="custom-checkbox"><input type="checkbox" id="cat-pede-veiculo"> Pedir Veículo</label>
                                                 <label class="custom-checkbox"><input type="checkbox" id="cat-pede-funcionario"> Pedir Funcionário</label>
+                                                <label class="custom-checkbox"><input type="checkbox" id="cat-ignora-liquido"> Ignorar no Result. Líquido</label>
                                             </div>
                                         </div>
                                         <div style="display: flex; gap: 10px;">
                                             <button type="submit" id="btn-submit-categoria" class="btn-submit" style="flex:1;">Adicionar categoria</button>
-                                            <button type="button" id="btn-cancel-cat" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('categoria')">Cancelar Edição</button>
                                         </div>
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
-                                            <thead><tr><th>Nome da categoria</th><th>Vínculos</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
+                                            <thead><tr><th>Nome da categoria</th><th>Vínculos e Regras</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-categorias"></tbody>
                                         </table>
                                     </div>
@@ -756,7 +758,6 @@
                                         </div>
                                         <div style="display: flex; gap: 10px;">
                                             <button type="submit" class="btn-submit" style="flex:1;">Adicionar veículo</button>
-                                            <button type="button" id="btn-cancel-veiculo" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('veiculo')">Cancelar Edição</button>
                                         </div>
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
@@ -781,7 +782,6 @@
                                         </div>
                                         <div style="display: flex; gap: 10px;">
                                             <button type="submit" class="btn-submit" style="flex:1;">Adicionar funcionário</button>
-                                            <button type="button" id="btn-cancel-funcionario" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('funcionario')">Cancelar Edição</button>
                                         </div>
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
@@ -799,7 +799,7 @@
         </div>
     </div>
 
-    <!-- MODAIS -->
+    <!-- MODAIS GERAIS -->
     <div class="modal-overlay" id="modal-meses">
         <div class="modal-content" style="width: min(450px, 100%);">
             <h3>Competência</h3>
@@ -831,6 +831,75 @@
     </div>
     
     <div class="modal-overlay" id="modal-data"><div class="modal-content"><h3>Liquidar fatura</h3><p>Informe a data em que o recurso entrou na conta corrente.</p><input type="date" id="data-recebimento-modal" class="form-control" required><input type="hidden" id="nf-id-modal"><div class="modal-actions"><button class="btn-cancel" onclick="window.fecharModal()">Cancelar</button><button class="btn-confirm" onclick="window.confirmarRecebimento()">Efetivar recebimento</button></div></div></div>
+
+    <!-- NOVOS MODAIS DE EDIÇÃO DE CADASTRO -->
+    <!-- Modal Editar Categoria -->
+    <div class="modal-overlay" id="modal-edit-categoria">
+        <div class="modal-content">
+            <h3>Editar Categoria</h3>
+            <p>Altere os dados da categoria de despesa.</p>
+            <input type="hidden" id="edit-cat-id">
+            <div class="form-group" style="margin-top:15px;">
+                <label class="field-label">Nome da Categoria</label>
+                <input type="text" id="edit-cat-nome" class="form-control" oninput="this.value = this.value.toUpperCase()" required>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <label class="custom-checkbox"><input type="checkbox" id="edit-cat-veiculo"> Pedir Veículo</label>
+                <label class="custom-checkbox"><input type="checkbox" id="edit-cat-funcionario"> Pedir Funcionário</label>
+                <label class="custom-checkbox"><input type="checkbox" id="edit-cat-ignora"> Ignorar no Result. Líquido</label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="document.getElementById('modal-edit-categoria').style.display='none'">Cancelar</button>
+                <button class="btn-confirm" onclick="window.salvarEdicaoCategoria()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Veículo -->
+    <div class="modal-overlay" id="modal-edit-veiculo">
+        <div class="modal-content">
+            <h3>Editar Veículo</h3>
+            <p>Altere os dados do veículo registrado.</p>
+            <input type="hidden" id="edit-veiculo-id">
+            <div class="form-group" style="margin-top:15px;">
+                <label class="field-label">Marca / modelo</label>
+                <input type="text" id="edit-veiculo-marca" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="field-label">Placa</label>
+                <input type="text" id="edit-veiculo-placa" class="form-control" maxlength="7" oninput="this.value = this.value.toUpperCase()" required>
+            </div>
+            <div class="form-group">
+                <label class="field-label">Cor</label>
+                <input type="text" id="edit-veiculo-cor" class="form-control" required>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="document.getElementById('modal-edit-veiculo').style.display='none'">Cancelar</button>
+                <button class="btn-confirm" onclick="window.salvarEdicaoVeiculo()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Funcionário -->
+    <div class="modal-overlay" id="modal-edit-funcionario">
+        <div class="modal-content">
+            <h3>Editar Funcionário</h3>
+            <p>Altere os dados do funcionário registrado.</p>
+            <input type="hidden" id="edit-func-id">
+            <div class="form-group" style="margin-top:15px;">
+                <label class="field-label">Nome</label>
+                <input type="text" id="edit-func-nome" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="field-label">Sobrenome</label>
+                <input type="text" id="edit-func-sobrenome" class="form-control" required>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="document.getElementById('modal-edit-funcionario').style.display='none'">Cancelar</button>
+                <button class="btn-confirm" onclick="window.salvarEdicaoFuncionario()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -916,7 +985,6 @@
     document.getElementById('filtro-mes').value = mesAtualDefault;
     document.getElementById('filtro-mes-lancamento').value = mesAtualDefault;
 
-    // NOVAS FUNÇÕES: Controles de Modal e Exclusão que estavam faltando
     window.abrirModal = function(id) {
         document.getElementById('nf-id-modal').value = id;
         document.getElementById('data-recebimento-modal').value = new Date().toISOString().split('T')[0];
@@ -987,7 +1055,6 @@
             alert("Ocorreu um erro ao excluir a despesa.");
         }
     };
-    // FIM DAS FUNÇÕES ADICIONADAS
 
     window.abrirModalMes = function() {
         const hidden = document.getElementById('filtro-mes-lancamento').value;
@@ -1038,7 +1105,6 @@
             document.getElementById('view-login').classList.add('active');
             notasFiscais = []; gastos = []; mesesBloqueados = []; categoriasDB = []; veiculosDB = []; funcionariosDB = [];
             
-            // Remove a splash screen imediatamente se o usuário não estiver logado
             const loader = document.getElementById('global-loader');
             if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 400); }
         }
@@ -1050,7 +1116,13 @@
 
         try {
             const queryCategorias = await getDocs(collection(db, "categoriasGasto"));
-            queryCategorias.forEach(doc => categoriasDB.push({ id: doc.id, nome: doc.data().nome, pedeVeiculo: doc.data().pedeVeiculo || false, pedeFuncionario: doc.data().pedeFuncionario || false }));
+            queryCategorias.forEach(doc => categoriasDB.push({ 
+                id: doc.id, 
+                nome: doc.data().nome, 
+                pedeVeiculo: doc.data().pedeVeiculo || false, 
+                pedeFuncionario: doc.data().pedeFuncionario || false,
+                ignoraLiquido: doc.data().ignoraLiquido || false
+            }));
             
             const queryNFs = await getDocs(collection(db, "notasFiscais"));
             queryNFs.forEach(doc => notasFiscais.push({ id: doc.id, ...doc.data() }));
@@ -1078,7 +1150,6 @@
         } finally { 
             document.getElementById('loading-indicator').style.display = 'none'; 
             
-            // Remove a splash screen logo após carregar os dados
             const loader = document.getElementById('global-loader');
             if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 400); }
         }
@@ -1107,11 +1178,12 @@
             categoriasDB.forEach(cat => {
                 const bVeiculo = cat.pedeVeiculo ? '<span class="badge-vinculo badge-v-sim">🚗 Veículo</span>' : '<span class="badge-vinculo badge-v-nao">🚗 N/A</span>';
                 const bFunc = cat.pedeFuncionario ? '<span class="badge-vinculo badge-v-sim">👤 Func</span>' : '<span class="badge-vinculo badge-v-nao">👤 N/A</span>';
+                const bIgnora = cat.ignoraLiquido ? '<span class="badge-vinculo" style="background:#fff5df; color:#d89433; border: 1px solid #f5deb3;">NÃO DEDUZ LÍQ.</span>' : '';
                 
                 tbodyConf.innerHTML += `
                     <tr>
                         <td style="font-weight: 500;">${cat.nome}</td>
-                        <td>${bVeiculo} ${bFunc}</td>
+                        <td>${bVeiculo} ${bFunc} ${bIgnora}</td>
                         <td style="text-align: center;">
                             <div class="action-flex" style="justify-content:center;">
                                 <button type="button" class="btn-icon btn-icon-edit" onclick="window.editarCategoria('${cat.id}')" title="Editar">${iconEdit}</button>
@@ -1326,27 +1398,6 @@
             document.getElementById('btn-submit-gasto').innerText = "Processar despesa";
             document.getElementById('btn-cancel-gasto').style.display = "none";
         }
-        else if(tipo === 'categoria') {
-            const form = document.getElementById('form-categoria');
-            delete form.dataset.editId;
-            form.reset();
-            document.getElementById('btn-submit-categoria').innerText = "Adicionar categoria";
-            document.getElementById('btn-cancel-cat').style.display = "none";
-        }
-        else if(tipo === 'veiculo') {
-            const form = document.getElementById('form-veiculo');
-            delete form.dataset.editId;
-            form.reset();
-            form.querySelector('.btn-submit').innerText = "Adicionar veículo";
-            document.getElementById('btn-cancel-veiculo').style.display = "none";
-        }
-        else if(tipo === 'funcionario') {
-            const form = document.getElementById('form-funcionario');
-            delete form.dataset.editId;
-            form.reset();
-            form.querySelector('.btn-submit').innerText = "Adicionar funcionário";
-            document.getElementById('btn-cancel-funcionario').style.display = "none";
-        }
     };
 
     window.editarNF = function(id) {
@@ -1389,42 +1440,92 @@
     window.editarCategoria = function(id) {
         const cat = categoriasDB.find(c => c.id === id);
         if(!cat) return;
-        document.getElementById('nome-categoria').value = cat.nome;
-        document.getElementById('cat-pede-veiculo').checked = cat.pedeVeiculo;
-        document.getElementById('cat-pede-funcionario').checked = cat.pedeFuncionario;
+        document.getElementById('edit-cat-id').value = cat.id;
+        document.getElementById('edit-cat-nome').value = cat.nome;
+        document.getElementById('edit-cat-veiculo').checked = cat.pedeVeiculo;
+        document.getElementById('edit-cat-funcionario').checked = cat.pedeFuncionario;
+        document.getElementById('edit-cat-ignora').checked = cat.ignoraLiquido || false;
         
-        const form = document.getElementById('form-categoria');
-        form.dataset.editId = id;
-        document.getElementById('btn-submit-categoria').innerText = "Atualizar categoria";
-        document.getElementById('btn-cancel-cat').style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('modal-edit-categoria').style.display = 'flex';
     };
 
     window.editarVeiculo = function(id) {
         const v = veiculosDB.find(c => c.id === id);
         if(!v) return;
-        document.getElementById('veiculo-marca-modelo').value = v.marcaModelo;
-        document.getElementById('veiculo-placa').value = v.placa;
-        document.getElementById('veiculo-cor').value = v.cor;
+        document.getElementById('edit-veiculo-id').value = v.id;
+        document.getElementById('edit-veiculo-marca').value = v.marcaModelo;
+        document.getElementById('edit-veiculo-placa').value = v.placa;
+        document.getElementById('edit-veiculo-cor').value = v.cor;
         
-        const form = document.getElementById('form-veiculo');
-        form.dataset.editId = id;
-        form.querySelector('.btn-submit').innerText = "Atualizar veículo";
-        document.getElementById('btn-cancel-veiculo').style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('modal-edit-veiculo').style.display = 'flex';
     };
 
     window.editarFuncionario = function(id) {
         const f = funcionariosDB.find(c => c.id === id);
         if(!f) return;
-        document.getElementById('funcionario-nome').value = f.nome;
-        document.getElementById('funcionario-sobrenome').value = f.sobrenome;
+        document.getElementById('edit-func-id').value = f.id;
+        document.getElementById('edit-func-nome').value = f.nome;
+        document.getElementById('edit-func-sobrenome').value = f.sobrenome;
         
-        const form = document.getElementById('form-funcionario');
-        form.dataset.editId = id;
-        form.querySelector('.btn-submit').innerText = "Atualizar funcionário";
-        document.getElementById('btn-cancel-funcionario').style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('modal-edit-funcionario').style.display = 'flex';
+    };
+
+    window.salvarEdicaoCategoria = async function() {
+        const id = document.getElementById('edit-cat-id').value;
+        const nomeUpper = document.getElementById('edit-cat-nome').value.trim().toUpperCase();
+        const chkVeiculo = document.getElementById('edit-cat-veiculo').checked;
+        const chkFunc = document.getElementById('edit-cat-funcionario').checked;
+        const chkIgnora = document.getElementById('edit-cat-ignora').checked;
+
+        if(!nomeUpper) { alert("Nome da categoria é obrigatório."); return; }
+        if (categoriasDB.find(c => c.nome === nomeUpper && c.id !== id)) { alert("Já existe outra categoria com este nome!"); return; }
+
+        try {
+            await updateDoc(doc(db, "categoriasGasto", id), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
+            const idx = categoriasDB.findIndex(c => c.id === id);
+            if(idx > -1) categoriasDB[idx] = { id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora };
+            
+            document.getElementById('modal-edit-categoria').style.display = 'none';
+            renderizarListasDeCategorias();
+            window.renderizarResultados();
+        } catch(e) { console.error(e); alert("Erro ao editar a categoria."); }
+    };
+
+    window.salvarEdicaoVeiculo = async function() {
+        const id = document.getElementById('edit-veiculo-id').value;
+        const marca = document.getElementById('edit-veiculo-marca').value.trim();
+        const placa = document.getElementById('edit-veiculo-placa').value.trim().toUpperCase();
+        const cor = document.getElementById('edit-veiculo-cor').value.trim();
+
+        if(!marca || !placa) { alert("Marca e placa são obrigatórios."); return; }
+
+        try {
+            await updateDoc(doc(db, 'veiculos', id), { marcaModelo: marca, placa: placa, cor: cor });
+            const idx = veiculosDB.findIndex(v => v.id === id);
+            if (idx > -1) veiculosDB[idx] = { id, marcaModelo: marca, placa: placa, cor: cor };
+            
+            document.getElementById('modal-edit-veiculo').style.display = 'none';
+            renderizarListaVeiculos(); 
+            popularSelectsVinculos();
+        } catch(e) { console.error(e); alert("Erro ao editar veículo."); }
+    };
+
+    window.salvarEdicaoFuncionario = async function() {
+        const id = document.getElementById('edit-func-id').value;
+        const nome = document.getElementById('edit-func-nome').value.trim();
+        const sobrenome = document.getElementById('edit-func-sobrenome').value.trim();
+
+        if(!nome) { alert("Nome é obrigatório."); return; }
+
+        try {
+            await updateDoc(doc(db, 'funcionarios', id), { nome: nome, sobrenome: sobrenome });
+            const idx = funcionariosDB.findIndex(f => f.id === id);
+            if(idx > -1) funcionariosDB[idx] = { id, nome: nome, sobrenome: sobrenome };
+            
+            document.getElementById('modal-edit-funcionario').style.display = 'none';
+            renderizarListaFuncionarios(); 
+            popularSelectsVinculos();
+        } catch(e) { console.error(e); alert("Erro ao editar funcionário."); }
     };
 
     document.getElementById('form-categoria').addEventListener('submit', async function(e) {
@@ -1433,24 +1534,13 @@
         const nomeUpper = inputNome.value.trim().toUpperCase();
         const chkVeiculo = document.getElementById('cat-pede-veiculo').checked;
         const chkFunc = document.getElementById('cat-pede-funcionario').checked;
-        const editId = this.dataset.editId;
+        const chkIgnora = document.getElementById('cat-ignora-liquido').checked;
         
-        if (!editId && categoriasDB.find(c => c.nome === nomeUpper)) { alert("Esta categoria já existe!"); return; }
-        if (editId && categoriasDB.find(c => c.nome === nomeUpper && c.id !== editId)) { alert("Já existe outra categoria com este nome!"); return; }
+        if (categoriasDB.find(c => c.nome === nomeUpper)) { alert("Esta categoria já existe!"); return; }
         
         try {
-            if (editId) {
-                await updateDoc(doc(db, "categoriasGasto", editId), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc });
-                const idx = categoriasDB.findIndex(c => c.id === editId);
-                if(idx > -1) categoriasDB[idx] = { id: editId, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc };
-                
-                delete this.dataset.editId;
-                document.getElementById('btn-submit-categoria').innerText = "Adicionar categoria";
-                document.getElementById('btn-cancel-cat').style.display = 'none';
-            } else {
-                const docRef = await addDoc(collection(db, "categoriasGasto"), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc });
-                categoriasDB.push({ id: docRef.id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc });
-            }
+            const docRef = await addDoc(collection(db, "categoriasGasto"), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
+            categoriasDB.push({ id: docRef.id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
             this.reset();
             renderizarListasDeCategorias();
         } catch(e) { console.error("Erro ao salvar categoria", e); }
@@ -1459,20 +1549,10 @@
     document.getElementById('form-veiculo').addEventListener('submit', async function(e) {
         e.preventDefault();
         const veiculo = { marcaModelo: document.getElementById('veiculo-marca-modelo').value.trim(), placa: document.getElementById('veiculo-placa').value.trim().toUpperCase(), cor: document.getElementById('veiculo-cor').value.trim() };
-        const editId = this.dataset.editId;
 
         try { 
-            if (editId) {
-                await updateDoc(doc(db, 'veiculos', editId), veiculo);
-                const idx = veiculosDB.findIndex(v => v.id === editId);
-                if (idx > -1) veiculosDB[idx] = { id: editId, ...veiculo };
-                delete this.dataset.editId;
-                this.querySelector('.btn-submit').innerText = "Adicionar veículo";
-                document.getElementById('btn-cancel-veiculo').style.display = 'none';
-            } else {
-                const docRef = await addDoc(collection(db, 'veiculos'), veiculo); 
-                veiculosDB.push({ id: docRef.id, ...veiculo }); 
-            }
+            const docRef = await addDoc(collection(db, 'veiculos'), veiculo); 
+            veiculosDB.push({ id: docRef.id, ...veiculo }); 
             this.reset(); 
             renderizarListaVeiculos(); 
             popularSelectsVinculos(); 
@@ -1482,27 +1562,16 @@
     document.getElementById('form-funcionario').addEventListener('submit', async function(e) {
         e.preventDefault();
         const funcionario = { nome: document.getElementById('funcionario-nome').value.trim(), sobrenome: document.getElementById('funcionario-sobrenome').value.trim() };
-        const editId = this.dataset.editId;
 
         try { 
-            if (editId) {
-                await updateDoc(doc(db, 'funcionarios', editId), funcionario);
-                const idx = funcionariosDB.findIndex(f => f.id === editId);
-                if(idx > -1) funcionariosDB[idx] = { id: editId, ...funcionario };
-                delete this.dataset.editId;
-                this.querySelector('.btn-submit').innerText = "Adicionar funcionário";
-                document.getElementById('btn-cancel-funcionario').style.display = 'none';
-            } else {
-                const docRef = await addDoc(collection(db, 'funcionarios'), funcionario); 
-                funcionariosDB.push({ id: docRef.id, ...funcionario }); 
-            }
+            const docRef = await addDoc(collection(db, 'funcionarios'), funcionario); 
+            funcionariosDB.push({ id: docRef.id, ...funcionario }); 
             this.reset(); 
             renderizarListaFuncionarios(); 
             popularSelectsVinculos(); 
         } catch (e) { console.error('Erro ao salvar funcionário', e); }
     });
 
-    // FUNÇÃO: Transição e redirecionamento para Produção
     window.irParaProducao = function(botao) {
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         botao.classList.add('active');
@@ -1623,7 +1692,6 @@
 
         setTimeout(() => {
             try {
-                // 1. Coleta do Período
                 const tipoVisao = document.getElementById('tipo-visao').value;
                 let periodoTexto = "";
                 if(tipoVisao === 'mes') {
@@ -1633,7 +1701,6 @@
                     periodoTexto = document.getElementById('filtro-ano').value || 'Ano Atual';
                 }
 
-                // 2. Coleta dos Indicadores Financeiros
                 const aReceber = document.getElementById('dash-a-receber').innerText;
                 const receita = document.getElementById('res-entradas').innerText;
                 const custo = document.getElementById('res-saidas').innerText;
@@ -1641,7 +1708,6 @@
                 const classLiquido = document.getElementById('res-liquido').className;
                 const isLiquidoDanger = classLiquido.includes('val-danger');
 
-                // 3. Função para Extrair Configuração Completa do Chart.js
                 const getChartConfig = (inst) => {
                     if (!inst) return null;
                     return {
@@ -1656,255 +1722,88 @@
                 const c2 = getChartConfig(graficoHorizInstancia);
                 const c3 = getChartConfig(graficoPizzaInstancia);
 
-                // 4. Construção da Estrutura HTML do Relatório
                 const htmlContent = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Relatório Financeiro - LV Transportes</title>
-    <!-- Bibliotecas Necessárias para Renderizar os Gráficos Localmente -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"><\/script>
     <style>
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background: #f4f7f8; 
-            color: #13212f; 
-            margin: 0; 
-            padding: 25px; 
-            -webkit-font-smoothing: antialiased;
-        }
-        .container { 
-            max-width: 1100px; 
-            margin: 0 auto; 
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 35px; 
-        }
-        .header h1 { 
-            margin: 0 0 8px 0; 
-            font-size: 26px; 
-            color: #0f202b; 
-            letter-spacing: -0.5px;
-        }
-        .header p { 
-            margin: 0; 
-            color: #718096; 
-            font-size: 15px; 
-            font-weight: 500;
-        }
-        .kpi-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 15px; 
-            margin-bottom: 35px; 
-        }
-        .kpi-card { 
-            background: #fff; 
-            padding: 22px 18px; 
-            border-radius: 14px; 
-            border: 1px solid #e3ebef; 
-            text-align: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-        }
-        .kpi-title { 
-            font-size: 11px; 
-            color: #718096; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            margin-bottom: 8px; 
-            letter-spacing: 0.8px; 
-        }
-        .kpi-value { 
-            font-size: 24px; 
-            font-weight: 700; 
-            letter-spacing: -1px;
-        }
-        .val-info { color: #318eb4; } 
-        .val-success { color: #1aa878; } 
-        .val-danger { color: #de5b5b; } 
-        .val-primary { color: #12a7a2; }
-        
-        .chart-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-        .chart-card { 
-            background: #fff; 
-            padding: 20px; 
-            border-radius: 14px; 
-            border: 1px solid #e3ebef; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-        }
-        .chart-card.full-width {
-            grid-column: 1 / -1;
-        }
-        .chart-container { 
-            position: relative; 
-            height: 380px; 
-            width: 100%; 
-        }
-        
-        @media (max-width: 900px) {
-            .chart-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 768px) {
-            body { padding: 15px; }
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-            .chart-card { padding: 15px; }
-            .chart-container { height: 320px; }
-            .header h1 { font-size: 22px; }
-            .kpi-value { font-size: 20px; }
-        }
-        @media (max-width: 420px) {
-            .kpi-grid { grid-template-columns: 1fr; }
-        }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f4f7f8; color: #13212f; margin: 0; padding: 25px; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 35px; }
+        .header h1 { margin: 0 0 8px 0; font-size: 26px; color: #0f202b; letter-spacing: -0.5px; }
+        .header p { margin: 0; color: #718096; font-size: 15px; font-weight: 500; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 35px; }
+        .kpi-card { background: #fff; padding: 22px 18px; border-radius: 14px; border: 1px solid #e3ebef; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .kpi-title { font-size: 11px; color: #718096; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.8px; }
+        .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -1px; }
+        .val-info { color: #318eb4; } .val-success { color: #1aa878; } .val-danger { color: #de5b5b; } .val-primary { color: #12a7a2; }
+        .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .chart-card { background: #fff; padding: 20px; border-radius: 14px; border: 1px solid #e3ebef; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .chart-card.full-width { grid-column: 1 / -1; }
+        .chart-container { position: relative; height: 380px; width: 100%; }
+        @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { body { padding: 15px; } .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .chart-card { padding: 15px; } .chart-container { height: 320px; } .header h1 { font-size: 22px; } .kpi-value { font-size: 20px; } }
+        @media (max-width: 420px) { .kpi-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>LV Transportes — Desempenho Financeiro</h1>
-            <p>Período Base: ${periodoTexto}</p>
-        </div>
-        
+        <div class="header"><h1>LV Transportes — Desempenho Financeiro</h1><p>Período Base: ${periodoTexto}</p></div>
         <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">A Receber</div>
-                <div class="kpi-value val-info">${aReceber}</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Receita Bruta</div>
-                <div class="kpi-value val-success">${receita}</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Custo Total</div>
-                <div class="kpi-value val-danger">${custo}</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Resultado Líquido</div>
-                <div class="kpi-value ${isLiquidoDanger ? 'val-danger' : 'val-primary'}">${liquido}</div>
-            </div>
+            <div class="kpi-card"><div class="kpi-title">A Receber</div><div class="kpi-value val-info">${aReceber}</div></div>
+            <div class="kpi-card"><div class="kpi-title">Receita Bruta</div><div class="kpi-value val-success">${receita}</div></div>
+            <div class="kpi-card"><div class="kpi-title">Custo Total</div><div class="kpi-value val-danger">${custo}</div></div>
+            <div class="kpi-card"><div class="kpi-title">Resultado Líquido</div><div class="kpi-value ${isLiquidoDanger ? 'val-danger' : 'val-primary'}">${liquido}</div></div>
         </div>
-
         <div class="chart-grid">
             ${c1 ? `<div class="chart-card full-width"><div class="chart-container"><canvas id="c1"></canvas></div></div>` : ''}
             ${c2 ? `<div class="chart-card"><div class="chart-container"><canvas id="c2"></canvas></div></div>` : ''}
             ${c3 ? `<div class="chart-card"><div class="chart-container"><canvas id="c3"></canvas></div></div>` : ''}
         </div>
     </div>
-
     <script>
         Chart.register(ChartDataLabels);
-        Chart.defaults.color = '#64748b';
-        Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
-        
-        // Função Geradora de Opções de Gráficos (Baseada no Tipo de Tela / Resize)
+        Chart.defaults.color = '#64748b'; Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
         function buildOptions(titulo, tipo, isHorizontal) {
             const isPie = tipo === 'pie' || tipo === 'doughnut';
             return {
-                responsive: true, 
-                maintainAspectRatio: false,
-                indexAxis: isHorizontal ? 'y' : 'x',
-                plugins: {
-                    legend: { 
-                        display: isPie || titulo.includes('Exercício'), 
-                        position: isPie ? 'bottom' : 'top' 
-                    },
-                    title: { 
-                        display: true, 
-                        text: titulo, 
-                        font: { size: 15, weight: 'bold' }, 
-                        color: '#13212f',
-                        padding: { bottom: 20 }
-                    },
-                    datalabels: isPie ? { display: false } : {
-                        color: '#718096', 
-                        font: { weight: 'bold', size: 10 },
-                        anchor: 'end', 
-                        align: isHorizontal ? 'right' : 'top', 
-                        offset: 4,
-                        formatter: function(value) {
-                            if (!value) return '';
-                            let v = value.toFixed(2).replace('.', ',');
-                            // Função raw string evadindo backslash escapes do arquivo JS
-                            return 'R$ ' + v.replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, "$1.");
-                        }
-                    }
-                },
-                scales: isPie ? {} : {
-                    y: isHorizontal ? { grid: { display: false } } : { beginAtZero: true, grid: { color: '#e2e8f0' } },
-                    x: isHorizontal ? { beginAtZero: true, grid: { color: '#e2e8f0' } } : { grid: { display: false } }
-                },
-                layout: { 
-                    padding: isPie ? 0 : { top: 15, right: isHorizontal ? 60 : 15 } 
-                }
+                responsive: true, maintainAspectRatio: false, indexAxis: isHorizontal ? 'y' : 'x',
+                plugins: { legend: { display: isPie || titulo.includes('Exercício'), position: isPie ? 'bottom' : 'top' }, title: { display: true, text: titulo, font: { size: 15, weight: 'bold' }, color: '#13212f', padding: { bottom: 20 } }, datalabels: isPie ? { display: false } : { color: '#718096', font: { weight: 'bold', size: 10 }, anchor: 'end', align: isHorizontal ? 'right' : 'top', offset: 4, formatter: function(value) { if (!value) return ''; let v = value.toFixed(2).replace('.', ','); return 'R$ ' + v.replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, "$1."); } } },
+                scales: isPie ? {} : { y: isHorizontal ? { grid: { display: false } } : { beginAtZero: true, grid: { color: '#e2e8f0' } }, x: isHorizontal ? { beginAtZero: true, grid: { color: '#e2e8f0' } } : { grid: { display: false } } }, layout: { padding: isPie ? 0 : { top: 15, right: isHorizontal ? 60 : 15 } }
             };
         }
-
-        // Renderização Imediata injetando os JSONs extraídos no momento do clique
         ${c1 ? `new Chart(document.getElementById('c1'), { type: '${c1.type}', data: ${JSON.stringify(c1.data)}, options: buildOptions('${c1.title}', '${c1.type}', ${c1.isHorizontal}) });` : ''}
         ${c2 ? `new Chart(document.getElementById('c2'), { type: '${c2.type}', data: ${JSON.stringify(c2.data)}, options: buildOptions('${c2.title}', '${c2.type}', ${c2.isHorizontal}) });` : ''}
         ${c3 ? `new Chart(document.getElementById('c3'), { type: '${c3.type}', data: ${JSON.stringify(c3.data)}, options: buildOptions('${c3.title}', '${c3.type}', false) });` : ''}
     <\/script>
-</body>
-</html>`;
+</body></html>`;
 
-                // 5. Criação do Arquivo .html e Gatilho de Download
                 const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Relatorio_Financeiro_LV_${periodoTexto.replace('/', '-')}.html`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-            } catch (error) {
-                console.error("Erro interno ao gerar o Relatório HTML:", error);
-                alert("Ocorreu um erro ao formatar o Relatório HTML. Verifique o console.");
-            } finally {
-                btnHtml.innerText = originalText;
-                btnHtml.disabled = false;
-            }
-        }, 300); // 300ms de delay para transição do botão
+                const a = document.createElement('a'); a.href = url; a.download = `Relatorio_Financeiro_LV_${periodoTexto.replace('/', '-')}.html`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            } catch (error) { console.error("Erro ao gerar HTML:", error); alert("Erro ao formatar o Relatório HTML."); } 
+            finally { btnHtml.innerText = originalText; btnHtml.disabled = false; }
+        }, 300); 
     };
 
     function atualizarDashboardPrincipal() {
-        // Cálculo do BALANÇO GERAL (Toda Existência)
-        let globalCaixa = 0;
-        let globalAReceber = 0;
+        let globalCaixa = 0; let globalAReceber = 0;
 
-        notasFiscais.forEach(nf => {
-            if (nf.status === 'pago') {
-                globalCaixa += parseFloat(nf.valor);
-            } else if (nf.status === 'pendente') {
-                globalAReceber += parseFloat(nf.valor);
-            }
-        });
-
-        gastos.forEach(gasto => {
-            globalCaixa -= parseFloat(gasto.valor);
-        });
+        notasFiscais.forEach(nf => { if (nf.status === 'pago') globalCaixa += parseFloat(nf.valor); else if (nf.status === 'pendente') globalAReceber += parseFloat(nf.valor); });
+        gastos.forEach(gasto => { globalCaixa -= parseFloat(gasto.valor); });
 
         document.getElementById('global-caixa').innerText = formatarMoeda(globalCaixa);
         document.getElementById('global-caixa').className = globalCaixa >= 0 ? 'kpi-value val-success' : 'kpi-value val-danger';
         document.getElementById('global-a-receber').innerText = formatarMoeda(globalAReceber);
 
-        // Cálculo do BALANÇO MENSAL (A Receber apenas do Mês corrente selecionado)
         let tARecMes = 0; 
         const mes = document.getElementById('filtro-mes-lancamento').value || new Date().toISOString().slice(0, 7);
-        
-        notasFiscais.forEach(nf => {
-            if (nf.status === 'pendente' && nf.dataLancamento && nf.dataLancamento.substring(0,7) === mes) {
-                tARecMes += parseFloat(nf.valor);
-            }
-        });
+        notasFiscais.forEach(nf => { if (nf.status === 'pendente' && nf.dataLancamento && nf.dataLancamento.substring(0,7) === mes) tARecMes += parseFloat(nf.valor); });
         document.getElementById('dash-a-receber').innerText = formatarMoeda(tARecMes);
     }
 
@@ -1943,12 +1842,8 @@
 
     window.toggleHistoricoGlobal = function() {
         const isChecked = document.getElementById('toggle-historico-global').checked;
-        document.querySelectorAll('.desc-gasto-linha').forEach(el => {
-            el.style.display = isChecked ? 'block' : 'none';
-        });
-        document.querySelectorAll('.icon-only-info').forEach(el => {
-            el.style.display = isChecked ? 'none' : 'inline-flex';
-        });
+        document.querySelectorAll('.desc-gasto-linha').forEach(el => { el.style.display = isChecked ? 'block' : 'none'; });
+        document.querySelectorAll('.icon-only-info').forEach(el => { el.style.display = isChecked ? 'none' : 'inline-flex'; });
     };
 
     window.renderizarGastos = function() {
@@ -1963,9 +1858,7 @@
 
         const filtroCat = document.getElementById('filtro-tabela-categoria')?.value;
         let gastosFiltrados = todosGastosDoMes;
-        if (filtroCat) {
-            gastosFiltrados = gastosFiltrados.filter(g => g.categoria === filtroCat);
-        }
+        if (filtroCat) { gastosFiltrados = gastosFiltrados.filter(g => g.categoria === filtroCat); }
 
         gastosFiltrados.sort((a, b) => {
             let valorA, valorB;
@@ -1988,13 +1881,11 @@
             let htmlDesc = '';
             if (gasto.descricao && gasto.descricao.trim() !== '') {
                 const descSegura = gasto.descricao.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                
                 htmlDesc = `
                 <span class="btn-icon-info icon-only-info" style="pointer-events:none; margin-left: 6px; vertical-align: middle; display: ${exibirHistorico ? 'none' : 'inline-flex'};" title="Contém histórico">i</span>
                 <div class="desc-gasto-linha" style="display: ${exibirHistorico ? 'block' : 'none'}; font-size: 11.5px; color: var(--ink-2); margin-top: 6px; padding: 7px 10px; background: var(--info-pale); border: 1px solid #cce5f0; border-radius: 6px; font-weight: 500; line-height: 1.4;">
                     ${descSegura}
-                </div>
-                `;
+                </div>`;
             }
             
             let btnExcluir = '';
@@ -2013,42 +1904,24 @@
         e.preventDefault();
         const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
         if(isMesBloqueadoVerificacao(mesFiltroAtual)) { alert("Lançamento bloqueado: Competência encerrada!"); return; }
-        
         const valorDigitado = document.getElementById('nf-valor').value;
         const valorNumerico = window.converterMoedaParaFloat(valorDigitado);
-
         if (valorNumerico <= 0) { alert("Por favor, digite um valor válido maior que zero."); return; }
-
         const editId = this.dataset.editId;
 
         if (editId) {
-            const updateObj = {
-                numero: document.getElementById('nf-numero').value, 
-                cliente: document.getElementById('nf-cliente').value.toUpperCase(), 
-                valor: valorNumerico
-            };
+            const updateObj = { numero: document.getElementById('nf-numero').value, cliente: document.getElementById('nf-cliente').value.toUpperCase(), valor: valorNumerico };
             try {
                 await updateDoc(doc(db, "notasFiscais", editId), updateObj);
                 const nfIndex = notasFiscais.findIndex(n => n.id === editId);
                 if(nfIndex !== -1) { notasFiscais[nfIndex] = { ...notasFiscais[nfIndex], ...updateObj }; }
-                window.cancelarEdicao('nf');
-                atualizarDashboardPrincipal(); 
-                renderizarNF();
+                window.cancelarEdicao('nf'); atualizarDashboardPrincipal(); renderizarNF();
             } catch(err) { console.error(err); }
         } else {
-            const novaNF = { 
-                numero: document.getElementById('nf-numero').value, 
-                cliente: document.getElementById('nf-cliente').value.toUpperCase(), 
-                valor: valorNumerico, 
-                status: 'pendente', dataLancamento: mesFiltroAtual + "-01" 
-            };
+            const novaNF = { numero: document.getElementById('nf-numero').value, cliente: document.getElementById('nf-cliente').value.toUpperCase(), valor: valorNumerico, status: 'pendente', dataLancamento: mesFiltroAtual + "-01" };
             try { 
-                const docRef = await addDoc(collection(db, "notasFiscais"), novaNF); 
-                novaNF.id = docRef.id; 
-                notasFiscais.push(novaNF); 
-                this.reset(); 
-                atualizarDashboardPrincipal(); 
-                renderizarNF(); 
+                const docRef = await addDoc(collection(db, "notasFiscais"), novaNF); novaNF.id = docRef.id; notasFiscais.push(novaNF); 
+                this.reset(); atualizarDashboardPrincipal(); renderizarNF(); 
             } catch(e) { console.error(e); }
         }
     });
@@ -2072,12 +1945,10 @@
         const updateObj = { 
             categoria: document.getElementById('gasto-categoria').value, 
             descricao: document.getElementById('gasto-desc').value.toUpperCase(), 
-            valor: valorNumerico, 
-            data: dataForm,
+            valor: valorNumerico, data: dataForm,
             veiculo: blocoVDisp ? document.getElementById('gasto-veiculo').value : null,
             funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null
         };
-        
         const editId = this.dataset.editId;
 
         if (editId) {
@@ -2085,20 +1956,12 @@
                 await updateDoc(doc(db, "gastos", editId), updateObj);
                 const gIndex = gastos.findIndex(g => g.id === editId);
                 if(gIndex !== -1) { gastos[gIndex] = { ...gastos[gIndex], ...updateObj }; }
-                window.cancelarEdicao('gasto');
-                window.verificarVinculosCategoria(); 
-                atualizarDashboardPrincipal(); 
-                window.renderizarGastos();
+                window.cancelarEdicao('gasto'); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos();
             } catch(err) { console.error(err); }
         } else {
             try { 
-                const docRef = await addDoc(collection(db, "gastos"), updateObj); 
-                updateObj.id = docRef.id; 
-                gastos.push(updateObj); 
-                this.reset(); 
-                window.verificarVinculosCategoria(); 
-                atualizarDashboardPrincipal(); 
-                window.renderizarGastos(); 
+                const docRef = await addDoc(collection(db, "gastos"), updateObj); updateObj.id = docRef.id; gastos.push(updateObj); 
+                this.reset(); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos(); 
             } catch(e) { console.error(e); }
         }
     });
@@ -2136,22 +1999,43 @@
         let mesAnoSelecionado = document.getElementById('filtro-mes').value;
         if (!mesAnoSelecionado) { mesAnoSelecionado = new Date().toISOString().slice(0, 7); document.getElementById('filtro-mes').value = mesAnoSelecionado; }
         
-        let totalEntradas = 0; let totalSaidas = 0; let gastosPorCategoria = {};
+        let totalEntradas = 0; 
+        let totalSaidas = 0; 
+        let gastosPorCategoria = {};
+        const mostrarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
+        
         categoriasDB.forEach(c => gastosPorCategoria[c.nome] = 0); gastosPorCategoria['OUTROS'] = 0; 
         const corBase = ['#8b5cf6', '#ef4444', '#f97316', '#eab308', '#14b8a6', '#db2777', '#3b82f6', '#06b6d4', '#64748b', '#84cc16'];
 
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(mesAnoSelecionado)) totalEntradas += parseFloat(nf.valor); });
+        
         gastos.forEach(gasto => {
             if (gasto.data && gasto.data.startsWith(mesAnoSelecionado)) {
                 const cat = gasto.categoria || 'OUTROS';
-                if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += parseFloat(gasto.valor); else gastosPorCategoria['OUTROS'] += parseFloat(gasto.valor);
-                totalSaidas += parseFloat(gasto.valor);
+                const catObj = categoriasDB.find(c => c.nome === cat);
+                
+                if (!catObj || !catObj.ignoraLiquido) {
+                    if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += parseFloat(gasto.valor); 
+                    else gastosPorCategoria['OUTROS'] += parseFloat(gasto.valor);
+                    
+                    totalSaidas += parseFloat(gasto.valor);
+                } else if (mostrarIgnoradas) {
+                    if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += parseFloat(gasto.valor); 
+                    else gastosPorCategoria['OUTROS'] += parseFloat(gasto.valor);
+                }
             }
         });
 
-        document.getElementById('titulo-entradas').innerText = "Receita Bruta (Mensal)"; document.getElementById('titulo-saidas').innerText = "Custo Total (Mensal)"; document.getElementById('titulo-liquido').innerText = "Resultado Líquido (Mensal)";
-        document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
-        document.getElementById('res-liquido').innerText = formatarMoeda(totalEntradas - totalSaidas); document.getElementById('res-liquido').className = (totalEntradas - totalSaidas) < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
+        document.getElementById('titulo-entradas').innerText = "Receita Bruta (Mensal)"; 
+        document.getElementById('titulo-saidas').innerText = "Custo Total (Mensal)"; 
+        document.getElementById('titulo-liquido').innerText = "Resultado Líquido (Mensal)";
+        
+        document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); 
+        document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
+        
+        const calcLiquido = totalEntradas - totalSaidas;
+        document.getElementById('res-liquido').innerText = formatarMoeda(calcLiquido); 
+        document.getElementById('res-liquido').className = calcLiquido < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
 
         let arrGastos = Object.keys(gastosPorCategoria).map((key, index) => { return { cat: key, val: gastosPorCategoria[key], color: corBase[index % corBase.length] }; });
         arrGastos = arrGastos.filter(item => item.val > 0); arrGastos.sort((a, b) => b.val - a.val);
@@ -2169,14 +2053,40 @@
 
     function renderizarVisaoAno() {
         const ano = document.getElementById('filtro-ano').value; if (!ano) return;
-        let entradasMes = new Array(12).fill(0); let saidasMes = new Array(12).fill(0); let totalEntradas = 0; let totalSaidas = 0;
+        let entradasMes = new Array(12).fill(0); 
+        let saidasMes = new Array(12).fill(0); 
+        let totalEntradas = 0; 
+        let totalSaidas = 0;
+        let totalSaidasGrafico = 0;
+        const mostrarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
 
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(ano)) { entradasMes[parseInt(nf.dataRecebimento.split('-')[1]) - 1] += parseFloat(nf.valor); totalEntradas += parseFloat(nf.valor); } });
-        gastos.forEach(gasto => { if (gasto.data && gasto.data.startsWith(ano)) { saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); totalSaidas += parseFloat(gasto.valor); } });
+        
+        gastos.forEach(gasto => { 
+            if (gasto.data && gasto.data.startsWith(ano)) { 
+                const catObj = categoriasDB.find(c => c.nome === gasto.categoria);
+                
+                if (!catObj || !catObj.ignoraLiquido) {
+                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); 
+                    totalSaidas += parseFloat(gasto.valor); 
+                    totalSaidasGrafico += parseFloat(gasto.valor);
+                } else if (mostrarIgnoradas) {
+                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); 
+                    totalSaidasGrafico += parseFloat(gasto.valor);
+                }
+            } 
+        });
 
-        document.getElementById('titulo-entradas').innerText = "Faturamento (Anual)"; document.getElementById('titulo-saidas').innerText = "Despesa (Anual)"; document.getElementById('titulo-liquido').innerText = "Balanço (Anual)";
-        document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
-        document.getElementById('res-liquido').innerText = formatarMoeda(totalEntradas - totalSaidas); document.getElementById('res-liquido').className = (totalEntradas - totalSaidas) < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
+        document.getElementById('titulo-entradas').innerText = "Faturamento (Anual)"; 
+        document.getElementById('titulo-saidas').innerText = "Despesa (Anual)"; 
+        document.getElementById('titulo-liquido').innerText = "Balanço (Anual)";
+        
+        document.getElementById('res-entradas').innerText = formatarMoeda(totalEntradas); 
+        document.getElementById('res-saidas').innerText = formatarMoeda(totalSaidas);
+        
+        const calcLiquido = totalEntradas - totalSaidas;
+        document.getElementById('res-liquido').innerText = formatarMoeda(calcLiquido); 
+        document.getElementById('res-liquido').className = calcLiquido < 0 ? 'kpi-value val-danger' : 'kpi-value val-primary';
 
         document.getElementById('grid-graficos-extras').style.display = 'grid';
 
@@ -2185,7 +2095,7 @@
 
         desenharGraficoMaster('graficoResultados', 'bar', labelsMeses, dataSetsAnual, `Exercício - ${ano}`, false, 'x');
         desenharGraficoMaster('graficoHorizontal', 'bar', labelsMeses, dataSetsAnual, `Exercício Horizontal - ${ano}`, false, 'y');
-        desenharGraficoMaster('graficoPizza', 'pie', ['Total Receitas', 'Total Despesas'], [{ label: 'Acumulado (R$)', data: [totalEntradas, totalSaidas], backgroundColor: ['#10b981', '#ef4444'] }], `Balanço Geral Anual - ${ano}`, true);
+        desenharGraficoMaster('graficoPizza', 'pie', ['Total Receitas', 'Total Despesas'], [{ label: 'Acumulado (R$)', data: [totalEntradas, totalSaidasGrafico], backgroundColor: ['#10b981', '#ef4444'] }], `Balanço Geral Anual - ${ano}`, true);
     }
 
     function desenharGraficoMaster(canvasId, tipo, labels, datasets, titulo, showLabels, indexAxis = 'x') {
