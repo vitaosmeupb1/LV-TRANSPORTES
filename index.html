@@ -532,6 +532,7 @@
                             <div class="kpi-card" style="background: linear-gradient(145deg, #fff 0%, #f5fcf9 100%); border-color: #d1eadd;">
                                 <div class="kpi-title">Caixa · Saldo Atual</div>
                                 <div class="kpi-value val-success" id="global-caixa">R$ 0,00</div>
+                                <div id="saldo-fim-mes-selecionado" style="font-size: 11px; color: var(--muted); margin-top: 5px; font-weight: 700; display: none;"></div>
                             </div>
                             <div class="kpi-card" style="background: linear-gradient(145deg, #fff 0%, #f5fbfd 100%); border-color: #d2eaf1;">
                                 <div class="kpi-title">A Receber · Total Acumulado</div>
@@ -2044,6 +2045,30 @@
         const valoresGrafico = [...arrGastos.map(item => item.val)]; 
         const cores = [...arrGastos.map(item => item.color)];
         
+        // --- NOVO: CÁLCULO DO SALDO ATÉ O ÚLTIMO DIA DO MÊS SELECIONADO ---
+        const [anoStr, mesStr] = mesAnoSelecionado.split('-');
+        const ultimoDia = new Date(anoStr, mesStr, 0).getDate();
+        const dataLimite = `${mesAnoSelecionado}-${ultimoDia}`;
+        
+        let saldoFimMes = 0;
+        notasFiscais.forEach(nf => {
+            if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento <= dataLimite) {
+                saldoFimMes += parseFloat(nf.valor);
+            }
+        });
+        gastos.forEach(g => {
+            if (g.data && g.data <= dataLimite) {
+                saldoFimMes -= parseFloat(g.valor);
+            }
+        });
+
+        const elSaldoFim = document.getElementById('saldo-fim-mes-selecionado');
+        if (elSaldoFim) {
+            elSaldoFim.style.display = 'block';
+            elSaldoFim.innerText = `Saldo acumulado em ${ultimoDia}/${mesStr}/${anoStr}: ${formatarMoeda(saldoFimMes)}`;
+        }
+        // -----------------------------------------------------------------
+
         document.getElementById('grid-graficos-extras').style.display = 'grid';
 
         desenharGraficoMaster('graficoResultados', 'bar', categoriasNomes, [{ label: 'Valor (R$)', data: valoresGrafico, backgroundColor: cores, borderRadius: 4 }], `Detalhamento de Saídas - ${mesAnoSelecionado.split('-')[1]}/${mesAnoSelecionado.split('-')[0]}`, true, 'x');
@@ -2053,6 +2078,12 @@
 
     function renderizarVisaoAno() {
         const ano = document.getElementById('filtro-ano').value; if (!ano) return;
+        
+        // --- NOVO: ESCONDE O SALDO FINAL NA VISÃO ANUAL ---
+        const elSaldoFim = document.getElementById('saldo-fim-mes-selecionado');
+        if (elSaldoFim) elSaldoFim.style.display = 'none';
+        // --------------------------------------------------
+
         let entradasMes = new Array(12).fill(0); 
         let saidasMes = new Array(12).fill(0); 
         let totalEntradas = 0; 
