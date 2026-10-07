@@ -1057,6 +1057,44 @@
         }
     };
 
+    window.excluirCategoria = async function(id) {
+        if(!confirm("Tem certeza que deseja excluir esta categoria?")) return;
+        try {
+            await deleteDoc(doc(db, "categoriasGasto", id));
+            categoriasDB = categoriasDB.filter(c => c.id !== id);
+            renderizarListasDeCategorias();
+        } catch(e) {
+            console.error("Erro ao excluir categoria:", e);
+            alert("Erro ao excluir a categoria.");
+        }
+    };
+
+    window.excluirVeiculo = async function(id) {
+        if(!confirm("Tem certeza que deseja excluir este veículo?")) return;
+        try {
+            await deleteDoc(doc(db, "veiculos", id));
+            veiculosDB = veiculosDB.filter(v => v.id !== id);
+            renderizarListaVeiculos();
+            popularSelectsVinculos();
+        } catch(e) {
+            console.error("Erro ao excluir veículo:", e);
+            alert("Erro ao excluir o veículo.");
+        }
+    };
+
+    window.excluirFuncionario = async function(id) {
+        if(!confirm("Tem certeza que deseja excluir este funcionário?")) return;
+        try {
+            await deleteDoc(doc(db, "funcionarios", id));
+            funcionariosDB = funcionariosDB.filter(f => f.id !== id);
+            renderizarListaFuncionarios();
+            popularSelectsVinculos();
+        } catch(e) {
+            console.error("Erro ao excluir funcionário:", e);
+            alert("Erro ao excluir o funcionário.");
+        }
+    };
+
     window.abrirModalMes = function() {
         const hidden = document.getElementById('filtro-mes-lancamento').value;
         if (hidden) {
