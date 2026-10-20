@@ -564,11 +564,11 @@
                         </div>
                         
                         <div class="chart-wrapper">
-                            <!-- NOVO FLAG PARA MOSTRAR IGNORADAS NOS GRÁFICOS -->
+                            <!-- FLAG PARA IGNORAR DESPESAS MARCADAS NOS GRÁFICOS E NO RESULTADO LÍQUIDO -->
                             <div style="position: absolute; top: 12px; right: 22px; z-index: 10;">
                                 <label class="custom-checkbox" style="font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--surface); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line);">
                                     <input type="checkbox" id="chk-mostrar-ignoradas" onchange="window.renderizarResultados()" style="width: 14px; height: 14px;">
-                                    Incluir ignoradas nos gráficos
+                                    Ignorar no líquido e gráficos
                                 </label>
                             </div>
                             <div class="chart-container"><canvas id="graficoResultados"></canvas></div>
@@ -2041,7 +2041,7 @@
         let totalEntradas = 0; 
         let totalSaidas = 0; 
         let gastosPorCategoria = {};
-        const mostrarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
+        const ocultarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
         
         categoriasDB.forEach(c => gastosPorCategoria[c.nome] = 0); gastosPorCategoria['OUTROS'] = 0; 
         const corBase = ['#8b5cf6', '#ef4444', '#f97316', '#eab308', '#14b8a6', '#db2777', '#3b82f6', '#06b6d4', '#64748b', '#84cc16'];
@@ -2050,17 +2050,16 @@
         
         gastos.forEach(gasto => {
             if (gasto.data && gasto.data.startsWith(mesAnoSelecionado)) {
+                const valorGasto = parseFloat(gasto.valor);
                 const cat = gasto.categoria || 'OUTROS';
                 const catObj = categoriasDB.find(c => c.nome === cat);
-                
-                if (!catObj || !catObj.ignoraLiquido) {
-                    if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += parseFloat(gasto.valor); 
-                    else gastosPorCategoria['OUTROS'] += parseFloat(gasto.valor);
+                const isIgnorada = Boolean(catObj && catObj.ignoraLiquido);
+
+                if (!isIgnorada || !ocultarIgnoradas) {
+                    if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += valorGasto; 
+                    else gastosPorCategoria['OUTROS'] += valorGasto;
                     
-                    totalSaidas += parseFloat(gasto.valor);
-                } else if (mostrarIgnoradas) {
-                    if(gastosPorCategoria[cat] !== undefined) gastosPorCategoria[cat] += parseFloat(gasto.valor); 
-                    else gastosPorCategoria['OUTROS'] += parseFloat(gasto.valor);
+                    totalSaidas += valorGasto;
                 }
             }
         });
@@ -2127,21 +2126,20 @@
         let totalEntradas = 0; 
         let totalSaidas = 0;
         let totalSaidasGrafico = 0;
-        const mostrarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
+        const ocultarIgnoradas = document.getElementById('chk-mostrar-ignoradas')?.checked || false;
 
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(ano)) { entradasMes[parseInt(nf.dataRecebimento.split('-')[1]) - 1] += parseFloat(nf.valor); totalEntradas += parseFloat(nf.valor); } });
         
         gastos.forEach(gasto => { 
             if (gasto.data && gasto.data.startsWith(ano)) { 
+                const valorGasto = parseFloat(gasto.valor);
                 const catObj = categoriasDB.find(c => c.nome === gasto.categoria);
-                
-                if (!catObj || !catObj.ignoraLiquido) {
-                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); 
-                    totalSaidas += parseFloat(gasto.valor); 
-                    totalSaidasGrafico += parseFloat(gasto.valor);
-                } else if (mostrarIgnoradas) {
-                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += parseFloat(gasto.valor); 
-                    totalSaidasGrafico += parseFloat(gasto.valor);
+                const isIgnorada = Boolean(catObj && catObj.ignoraLiquido);
+
+                if (!isIgnorada || !ocultarIgnoradas) {
+                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += valorGasto; 
+                    totalSaidas += valorGasto; 
+                    totalSaidasGrafico += valorGasto;
                 }
             } 
         });
