@@ -678,7 +678,6 @@
                                     </div>
                                     <div style="display: flex; gap: 10px;">
                                         <button type="submit" id="btn-submit-gasto" class="btn-submit" style="flex:1;">Processar despesa</button>
-                                        <button type="button" id="btn-cancel-gasto" class="btn-cancel-edit" style="display:none; flex:1;" onclick="window.cancelarEdicao('gasto')">Cancelar Edição</button>
                                     </div>
                                 </form>
                             </div>
@@ -898,6 +897,51 @@
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="document.getElementById('modal-edit-funcionario').style.display='none'">Cancelar</button>
                 <button class="btn-confirm" onclick="window.salvarEdicaoFuncionario()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Despesa (Saída) -->
+    <div class="modal-overlay" id="modal-edit-gasto">
+        <div class="modal-content" style="width: min(500px, 100%);">
+            <h3>Editar Despesa</h3>
+            <p>Altere os dados da despesa lançada.</p>
+            <input type="hidden" id="edit-gasto-id">
+            <div class="form-row form-row-2" style="margin-top:15px;">
+                <div>
+                    <label class="field-label" for="edit-gasto-categoria">Categoria</label>
+                    <select id="edit-gasto-categoria" class="form-control" onchange="window.verificarVinculosCategoriaModal()" required>
+                        <option value="">Selecione a Categoria...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="edit-gasto-data">Data da competência</label>
+                    <input type="date" id="edit-gasto-data" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-row form-row-2" id="edit-linha-vinculos" style="display: none; padding: 12px; background: var(--surface-soft); border-radius: 12px; border: 1px solid var(--line);">
+                <div id="edit-bloco-veiculo" style="display: none;">
+                    <label class="field-label" for="edit-gasto-veiculo" style="color: var(--brand-dark);">Veículo vinculado</label>
+                    <select id="edit-gasto-veiculo" class="form-control"><option value="">Selecione...</option></select>
+                </div>
+                <div id="edit-bloco-funcionario" style="display: none;">
+                    <label class="field-label" for="edit-gasto-funcionario" style="color: var(--brand-dark);">Funcionário vinculado</label>
+                    <select id="edit-gasto-funcionario" class="form-control"><option value="">Selecione...</option></select>
+                </div>
+            </div>
+            <div class="form-row form-row-2">
+                <div>
+                    <label class="field-label" for="edit-gasto-desc">Histórico</label>
+                    <input type="text" id="edit-gasto-desc" class="form-control" placeholder="Opcional" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div>
+                    <label class="field-label" for="edit-gasto-valor">Valor da despesa</label>
+                    <input type="text" inputmode="numeric" id="edit-gasto-valor" class="form-control" placeholder="R$ 0,00" oninput="window.mascaraMoeda(event)" required>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="window.fecharModalEdicaoGasto()">Cancelar</button>
+                <button type="button" class="btn-confirm" onclick="window.salvarEdicaoGasto()">Salvar Alterações</button>
             </div>
         </div>
     </div>
@@ -1203,6 +1247,14 @@
             categoriasDB.forEach(cat => { selectCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
         }
 
+        const selectEditCat = document.getElementById('edit-gasto-categoria');
+        if(selectEditCat) {
+            const valEditAntigo = selectEditCat.value;
+            selectEditCat.innerHTML = '<option value="">Selecione a Categoria...</option>';
+            categoriasDB.forEach(cat => { selectEditCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            selectEditCat.value = valEditAntigo;
+        }
+
         const selectFiltroCat = document.getElementById('filtro-tabela-categoria');
         if(selectFiltroCat) {
             const valAntigo = selectFiltroCat.value;
@@ -1238,15 +1290,29 @@
     function popularSelectsVinculos() {
         const selectVeiculo = document.getElementById('gasto-veiculo');
         const selectFuncionario = document.getElementById('gasto-funcionario');
+        const selectEditVeiculo = document.getElementById('edit-gasto-veiculo');
+        const selectEditFuncionario = document.getElementById('edit-gasto-funcionario');
         
         if (selectVeiculo) {
             selectVeiculo.innerHTML = '<option value="">Selecione o Veículo...</option>';
             veiculosDB.forEach(v => { selectVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
         }
+        if (selectEditVeiculo) {
+            const valV = selectEditVeiculo.value;
+            selectEditVeiculo.innerHTML = '<option value="">Selecione o Veículo...</option>';
+            veiculosDB.forEach(v => { selectEditVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
+            selectEditVeiculo.value = valV;
+        }
         
         if (selectFuncionario) {
             selectFuncionario.innerHTML = '<option value="">Selecione o Funcionário...</option>';
             funcionariosDB.forEach(f => { selectFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+        }
+        if (selectEditFuncionario) {
+            const valF = selectEditFuncionario.value;
+            selectEditFuncionario.innerHTML = '<option value="">Selecione o Funcionário...</option>';
+            funcionariosDB.forEach(f => { selectEditFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+            selectEditFuncionario.value = valF;
         }
     }
 
@@ -1271,6 +1337,30 @@
             linha.style.display = 'none';
             document.getElementById('gasto-veiculo').required = false;
             document.getElementById('gasto-funcionario').required = false;
+        }
+    };
+
+    window.verificarVinculosCategoriaModal = function() {
+        const catNome = document.getElementById('edit-gasto-categoria').value;
+        const categoria = categoriasDB.find(c => c.nome === catNome);
+        const blocoV = document.getElementById('edit-bloco-veiculo');
+        const blocoF = document.getElementById('edit-bloco-funcionario');
+        const linha = document.getElementById('edit-linha-vinculos');
+        
+        if (categoria) {
+            blocoV.style.display = categoria.pedeVeiculo ? 'block' : 'none';
+            blocoF.style.display = categoria.pedeFuncionario ? 'block' : 'none';
+            linha.style.display = (categoria.pedeVeiculo || categoria.pedeFuncionario) ? 'grid' : 'none';
+            
+            document.getElementById('edit-gasto-veiculo').required = categoria.pedeVeiculo;
+            document.getElementById('edit-gasto-funcionario').required = categoria.pedeFuncionario;
+            
+            if(!categoria.pedeVeiculo) document.getElementById('edit-gasto-veiculo').value = "";
+            if(!categoria.pedeFuncionario) document.getElementById('edit-gasto-funcionario').value = "";
+        } else {
+            linha.style.display = 'none';
+            document.getElementById('edit-gasto-veiculo').required = false;
+            document.getElementById('edit-gasto-funcionario').required = false;
         }
     };
 
@@ -1430,12 +1520,7 @@
             document.getElementById('btn-cancel-nf').style.display = "none";
         }
         else if(tipo === 'gasto') {
-            const form = document.getElementById('form-gasto');
-            delete form.dataset.editId;
-            form.reset();
-            window.verificarVinculosCategoria();
-            document.getElementById('btn-submit-gasto').innerText = "Processar despesa";
-            document.getElementById('btn-cancel-gasto').style.display = "none";
+            window.fecharModalEdicaoGasto();
         }
     };
 
@@ -1454,26 +1539,81 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    window.fecharModalEdicaoGasto = function() {
+        document.getElementById('modal-edit-gasto').style.display = 'none';
+        document.getElementById('edit-gasto-id').value = '';
+    };
+
     window.editarGasto = function(id, dataRef) {
         if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
         const g = gastos.find(x => x.id === id);
         if(!g) return;
         
-        document.getElementById('gasto-categoria').value = g.categoria;
-        document.getElementById('gasto-data').value = g.data;
-        document.getElementById('gasto-desc').value = g.descricao || '';
-        document.getElementById('gasto-valor').value = formatarMoeda(g.valor);
+        document.getElementById('edit-gasto-id').value = g.id;
+        document.getElementById('edit-gasto-categoria').value = g.categoria;
         
-        window.verificarVinculosCategoria(); 
+        const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
+        const dataInput = document.getElementById('edit-gasto-data');
+        if (mesFiltroAtual) {
+            const [ano, mes] = mesFiltroAtual.split('-');
+            const ultimoDia = new Date(ano, mes, 0).getDate();
+            dataInput.min = `${mesFiltroAtual}-01`;
+            dataInput.max = `${mesFiltroAtual}-${ultimoDia}`;
+        }
+        dataInput.value = g.data;
+        document.getElementById('edit-gasto-desc').value = g.descricao || '';
+        document.getElementById('edit-gasto-valor').value = formatarMoeda(g.valor);
         
-        if(g.veiculo) document.getElementById('gasto-veiculo').value = g.veiculo;
-        if(g.funcionario) document.getElementById('gasto-funcionario').value = g.funcionario;
+        window.verificarVinculosCategoriaModal();
         
-        const form = document.getElementById('form-gasto');
-        form.dataset.editId = id;
-        document.getElementById('btn-submit-gasto').innerText = "Atualizar despesa";
-        document.getElementById('btn-cancel-gasto').style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('edit-gasto-veiculo').value = g.veiculo || '';
+        document.getElementById('edit-gasto-funcionario').value = g.funcionario || '';
+        
+        document.getElementById('modal-edit-gasto').style.display = 'flex';
+    };
+
+    window.salvarEdicaoGasto = async function() {
+        const id = document.getElementById('edit-gasto-id').value;
+        const categoria = document.getElementById('edit-gasto-categoria').value;
+        const dataForm = document.getElementById('edit-gasto-data').value;
+        const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
+        
+        if (!categoria) { alert("Por favor, selecione uma categoria."); return; }
+        if (!dataForm || !dataForm.startsWith(mesFiltroAtual)) { alert(`Data inválida. O documento deve pertencer à competência ativa (${mesFiltroAtual}).`); return; }
+        if (isMesBloqueadoVerificacao(dataForm)) { alert("Lançamento bloqueado: Competência encerrada!"); return; }
+        
+        const valorDigitado = document.getElementById('edit-gasto-valor').value;
+        const valorNumerico = window.converterMoedaParaFloat(valorDigitado);
+        if (valorNumerico <= 0) { alert("Por favor, digite um valor válido maior que zero."); return; }
+
+        const blocoVDisp = document.getElementById('edit-bloco-veiculo').style.display !== 'none';
+        const blocoFDisp = document.getElementById('edit-bloco-funcionario').style.display !== 'none';
+        const veiculoVal = document.getElementById('edit-gasto-veiculo').value;
+        const funcVal = document.getElementById('edit-gasto-funcionario').value;
+
+        if (blocoVDisp && !veiculoVal) { alert("Por favor, selecione o veículo vinculado."); return; }
+        if (blocoFDisp && !funcVal) { alert("Por favor, selecione o funcionário vinculado."); return; }
+
+        const updateObj = {
+            categoria: categoria,
+            descricao: document.getElementById('edit-gasto-desc').value.toUpperCase(),
+            valor: valorNumerico,
+            data: dataForm,
+            veiculo: blocoVDisp ? veiculoVal : null,
+            funcionario: blocoFDisp ? funcVal : null
+        };
+
+        try {
+            await updateDoc(doc(db, "gastos", id), updateObj);
+            const gIndex = gastos.findIndex(g => g.id === id);
+            if(gIndex !== -1) { gastos[gIndex] = { ...gastos[gIndex], ...updateObj }; }
+            window.fecharModalEdicaoGasto();
+            atualizarDashboardPrincipal();
+            window.renderizarGastos();
+        } catch(err) {
+            console.error(err);
+            alert("Erro ao atualizar a despesa.");
+        }
     };
 
     window.editarCategoria = function(id) {
@@ -1988,21 +2128,10 @@
             veiculo: blocoVDisp ? document.getElementById('gasto-veiculo').value : null,
             funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null
         };
-        const editId = this.dataset.editId;
-
-        if (editId) {
-            try {
-                await updateDoc(doc(db, "gastos", editId), updateObj);
-                const gIndex = gastos.findIndex(g => g.id === editId);
-                if(gIndex !== -1) { gastos[gIndex] = { ...gastos[gIndex], ...updateObj }; }
-                window.cancelarEdicao('gasto'); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos();
-            } catch(err) { console.error(err); }
-        } else {
-            try { 
-                const docRef = await addDoc(collection(db, "gastos"), updateObj); updateObj.id = docRef.id; gastos.push(updateObj); 
-                this.reset(); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos(); 
-            } catch(e) { console.error(e); }
-        }
+        try { 
+            const docRef = await addDoc(collection(db, "gastos"), updateObj); updateObj.id = docRef.id; gastos.push(updateObj); 
+            this.reset(); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos(); 
+        } catch(e) { console.error(e); }
     });
 
     window.mudarTipoVisao = function() {
