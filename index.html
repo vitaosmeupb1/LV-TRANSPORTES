@@ -242,6 +242,7 @@
     
     .form-row { display: grid; grid-template-columns: 1fr; gap: 13px; margin-bottom: 17px; }
     .form-row-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .form-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     form .form-control { min-height: 46px; }
     .btn-submit { width: 100%; min-height: 46px; border: 0; border-radius: 10px; color: #fff; background: var(--brand); font-weight: 700; cursor: pointer; transition: all .2s; }
     .btn-submit:hover:not(:disabled) { background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 7px 15px rgba(18,167,162,.17); }
@@ -440,7 +441,7 @@
         .kpi-value { margin-top: 6px; font-size: 19px; }
         .entry-card > .entry-header { align-items: flex-start; flex-direction: column; padding: 18px; }
         .entry-body { padding: 18px; }
-        .form-row-2 { grid-template-columns: 1fr; }
+        .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
         .section-heading { display: block; }
         .section-heading p { margin-top: 5px; }
         
@@ -716,9 +717,10 @@
                             <div class="entry-header"><div><h2>Despesas operacionais</h2><p>Organize cada saída com precisão.</p></div><div class="totalizador-destaque total-saida">Total da competência: <span id="total-saidas-tab">R$ 0,00</span></div></div>
                             <div class="entry-body">
                                 <form id="form-gasto">
-                                    <div class="form-row form-row-2">
+                                    <div class="form-row form-row-3">
                                         <div><label class="field-label" for="gasto-categoria">Categoria</label><select id="gasto-categoria" class="form-control" onchange="window.verificarVinculosCategoria()" required><option value="">Carregando categorias...</option></select></div>
-                                        <div><label class="field-label" for="gasto-data">Data da competência</label><input type="date" id="gasto-data" class="form-control" required title="Data de competência"></div>
+                                        <div><label class="field-label" for="gasto-competencia">Mês de competência</label><select id="gasto-competencia" class="form-control" required title="Mês de competência"></select></div>
+                                        <div><label class="field-label" for="gasto-data">Data da ocorrência</label><input type="date" id="gasto-data" class="form-control" required title="Data da ocorrência"></div>
                                     </div>
                                     
                                     <div class="form-row form-row-2" id="linha-vinculos" style="display: none; padding: 12px; background: var(--surface-soft); border-radius: 12px; border: 1px solid var(--line);">
@@ -776,7 +778,7 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table><thead><tr><th onclick="window.ordenarGastos('categoria')" class="sortable">Categoria ↕</th><th onclick="window.ordenarGastos('data')" class="sortable">Data ↕</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-gastos"></tbody></table>
+                            <table><thead><tr><th onclick="window.ordenarGastos('categoria')" class="sortable">Categoria ↕</th><th onclick="window.ordenarGastos('data')" class="sortable">Data da Ocorrência ↕</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-gastos"></tbody></table>
                         </div>
 
                         <div class="saidas-mini-totais-bar" id="rodape-totais-saidas">
@@ -994,11 +996,11 @@
 
     <!-- Modal Editar Despesa (Saída) -->
     <div class="modal-overlay" id="modal-edit-gasto">
-        <div class="modal-content" style="width: min(500px, 100%);">
+        <div class="modal-content" style="width: min(640px, 100%);">
             <h3>Editar Despesa</h3>
             <p>Altere os dados da despesa lançada.</p>
             <input type="hidden" id="edit-gasto-id">
-            <div class="form-row form-row-2" style="margin-top:15px;">
+            <div class="form-row form-row-3" style="margin-top:15px;">
                 <div>
                     <label class="field-label" for="edit-gasto-categoria">Categoria</label>
                     <select id="edit-gasto-categoria" class="form-control" onchange="window.verificarVinculosCategoriaModal()" required>
@@ -1006,7 +1008,11 @@
                     </select>
                 </div>
                 <div>
-                    <label class="field-label" for="edit-gasto-data">Data da competência</label>
+                    <label class="field-label" for="edit-gasto-competencia">Mês de competência</label>
+                    <select id="edit-gasto-competencia" class="form-control" required></select>
+                </div>
+                <div>
+                    <label class="field-label" for="edit-gasto-data">Data da ocorrência</label>
                     <input type="date" id="edit-gasto-data" class="form-control" required>
                 </div>
             </div>
@@ -1161,6 +1167,47 @@
     };
 
     const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    const NOMES_MESES_COMPETENCIA = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+    function obterCompetenciaGasto(gasto) {
+        if (!gasto) return '';
+        if (gasto.competencia && gasto.competencia.length >= 7) return gasto.competencia.substring(0, 7);
+        if (gasto.data && gasto.data.length >= 7) return gasto.data.substring(0, 7);
+        return '';
+    }
+
+    function formatarMesCompetenciaCurto(ym) {
+        if (!ym || ym.length < 7) return '-';
+        const [ano, mes] = ym.substring(0, 7).split('-');
+        const idx = parseInt(mes, 10) - 1;
+        const nome = NOMES_MESES_COMPETENCIA[idx] ? NOMES_MESES_COMPETENCIA[idx].substring(0, 3) : mes;
+        return `${nome}/${ano}`;
+    }
+
+    window.popularSelectsMesCompetenciaGasto = function(anoRef, valorPadrao) {
+        const ano = anoRef || (document.getElementById('filtro-mes-lancamento')?.value || new Date().toISOString().slice(0, 7)).split('-')[0] || String(new Date().getFullYear());
+        const selects = [
+            document.getElementById('gasto-competencia'),
+            document.getElementById('edit-gasto-competencia')
+        ];
+        selects.forEach(sel => {
+            if (!sel) return;
+            const valAtual = valorPadrao || sel.value || document.getElementById('filtro-mes-lancamento')?.value || `${ano}-01`;
+            const anoDoValor = valAtual.split('-')[0] || ano;
+            const anosParaListar = anoDoValor !== ano ? [anoDoValor, ano] : [ano];
+            sel.innerHTML = '';
+            anosParaListar.forEach(a => {
+                NOMES_MESES_COMPETENCIA.forEach((nomeMes, i) => {
+                    const mStr = String(i + 1).padStart(2, '0');
+                    const opt = document.createElement('option');
+                    opt.value = `${a}-${mStr}`;
+                    opt.textContent = anosParaListar.length > 1 ? `${nomeMes} / ${a}` : `${nomeMes} (${a})`;
+                    sel.appendChild(opt);
+                });
+            });
+            sel.value = valAtual;
+        });
+    };
     const formatarData = (data) => {
         if (!data) return '-';
         const [ano, mes, dia] = data.split('-');
@@ -1555,7 +1602,11 @@
         const anoAtual = new Date().getFullYear();
         const anos = new Set([String(anoAtual - 2), String(anoAtual - 1), String(anoAtual), String(anoAtual + 1), String(anoAtual + 2)]);
         notasFiscais.forEach(nf => { [nf.dataLancamento, nf.dataRecebimento].forEach(data => { if (data) anos.add(data.slice(0, 4)); }); });
-        gastos.forEach(gasto => { if (gasto.data) anos.add(gasto.data.slice(0, 4)); });
+        gastos.forEach(gasto => {
+            const comp = obterCompetenciaGasto(gasto);
+            if (comp) anos.add(comp.slice(0, 4));
+            if (gasto.data) anos.add(gasto.data.slice(0, 4));
+        });
         mesesBloqueados.forEach(mes => { if (mes.mes) anos.add(mes.mes.slice(0, 4)); });
         const valorAtual = (document.getElementById('filtro-mes-lancamento').value || `${anoAtual}-01`).slice(0, 4);
         selectAno.innerHTML = '';
@@ -1622,6 +1673,7 @@
         if (!hidden.value) hidden.value = mesAtualDefault;
         preencherAnosCompetencia();
         atualizarCompetenciaVisual();
+        window.popularSelectsMesCompetenciaGasto(hidden.value.split('-')[0], hidden.value);
     }
 
     function renderizarListaVeiculos() {
@@ -1712,21 +1764,22 @@
     };
 
     window.editarGasto = function(id, dataRef) {
-        if(isMesBloqueadoVerificacao(dataRef)) { alert("Período bloqueado!"); return; }
         const g = gastos.find(x => x.id === id);
         if(!g) return;
+        const compRef = obterCompetenciaGasto(g) || dataRef;
+        if(isMesBloqueadoVerificacao(compRef)) { alert("Período bloqueado!"); return; }
         
         document.getElementById('edit-gasto-id').value = g.id;
         document.getElementById('edit-gasto-categoria').value = g.categoria;
         
-        const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
+        const compGasto = obterCompetenciaGasto(g) || document.getElementById('filtro-mes-lancamento').value;
+        window.popularSelectsMesCompetenciaGasto(compGasto.split('-')[0], compGasto);
+        const editCompSelect = document.getElementById('edit-gasto-competencia');
+        if (editCompSelect) editCompSelect.value = compGasto;
+
         const dataInput = document.getElementById('edit-gasto-data');
-        if (mesFiltroAtual) {
-            const [ano, mes] = mesFiltroAtual.split('-');
-            const ultimoDia = new Date(ano, mes, 0).getDate();
-            dataInput.min = `${mesFiltroAtual}-01`;
-            dataInput.max = `${mesFiltroAtual}-${ultimoDia}`;
-        }
+        dataInput.removeAttribute('min');
+        dataInput.removeAttribute('max');
         dataInput.value = g.data;
         document.getElementById('edit-gasto-desc').value = g.descricao || '';
         document.getElementById('edit-gasto-valor').value = formatarMoeda(g.valor);
@@ -1742,12 +1795,13 @@
     window.salvarEdicaoGasto = async function() {
         const id = document.getElementById('edit-gasto-id').value;
         const categoria = document.getElementById('edit-gasto-categoria').value;
+        const competenciaForm = document.getElementById('edit-gasto-competencia').value;
         const dataForm = document.getElementById('edit-gasto-data').value;
-        const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
         
         if (!categoria) { alert("Por favor, selecione uma categoria."); return; }
-        if (!dataForm || !dataForm.startsWith(mesFiltroAtual)) { alert(`Data inválida. O documento deve pertencer à competência ativa (${mesFiltroAtual}).`); return; }
-        if (isMesBloqueadoVerificacao(dataForm)) { alert("Lançamento bloqueado: Competência encerrada!"); return; }
+        if (!competenciaForm) { alert("Por favor, selecione o mês de competência."); return; }
+        if (!dataForm) { alert("Por favor, informe a data da ocorrência."); return; }
+        if (isMesBloqueadoVerificacao(competenciaForm)) { alert("Lançamento bloqueado: Competência encerrada!"); return; }
         
         const valorDigitado = document.getElementById('edit-gasto-valor').value;
         const valorNumerico = window.converterMoedaParaFloat(valorDigitado);
@@ -1763,6 +1817,7 @@
 
         const updateObj = {
             categoria: categoria,
+            competencia: competenciaForm,
             descricao: document.getElementById('edit-gasto-desc').value.toUpperCase(),
             valor: valorNumerico,
             data: dataForm,
@@ -1966,21 +2021,22 @@
         const btnSubmitGasto = document.getElementById('btn-submit-gasto');
 
         if (mesSelecionado) {
+            const [ano] = mesSelecionado.split('-');
+            window.popularSelectsMesCompetenciaGasto(ano, mesSelecionado);
+            const selectComp = document.getElementById('gasto-competencia');
+            if (selectComp) selectComp.value = mesSelecionado;
+
             const dataInput = document.getElementById('gasto-data');
-            const [ano, mes] = mesSelecionado.split('-');
-            const ultimoDia = new Date(ano, mes, 0).getDate();
-            
-            dataInput.min = `${mesSelecionado}-01`;
-            dataInput.max = `${mesSelecionado}-${ultimoDia}`;
-            if (dataInput.value && !dataInput.value.startsWith(mesSelecionado)) { dataInput.value = ''; }
+            if (dataInput) {
+                dataInput.removeAttribute('min');
+                dataInput.removeAttribute('max');
+            }
 
             const filtroDataTabela = document.getElementById('filtro-tabela-data');
             if (filtroDataTabela) {
-                filtroDataTabela.min = `${mesSelecionado}-01`;
-                filtroDataTabela.max = `${mesSelecionado}-${ultimoDia}`;
-                if (filtroDataTabela.value && !filtroDataTabela.value.startsWith(mesSelecionado)) {
-                    filtroDataTabela.value = '';
-                }
+                filtroDataTabela.removeAttribute('min');
+                filtroDataTabela.removeAttribute('max');
+                filtroDataTabela.value = '';
             }
         }
 
@@ -2023,7 +2079,7 @@
         if(!mesFiltro) { alert("Selecione um mês."); return; }
 
         const nfs = notasFiscais.filter(nf => (nf.status === 'pago' ? nf.dataRecebimento?.startsWith(mesFiltro) : nf.dataLancamento?.startsWith(mesFiltro)));
-        const gts = gastos.filter(g => g.data?.startsWith(mesFiltro));
+        const gts = gastos.filter(g => obterCompetenciaGasto(g) === mesFiltro);
         const dados = [];
 
         nfs.forEach(nf => dados.push({ "Data Form": nf.status === 'pago' ? formatarData(nf.dataRecebimento) : 'Pendente', "Tipo": "Entrada", "Categoria": "Frete", "Desc": `NF: ${nf.numero} - Cli: ${nf.cliente}`, "Valor": parseFloat(nf.valor) }));
@@ -2228,7 +2284,7 @@
         const estaBloqueado = isMesBloqueadoVerificacao(mesFiltro);
         
         let somaSaidasGeral = 0;
-        let todosGastosDoMes = gastos.filter(gasto => gasto.data && gasto.data.startsWith(mesFiltro));
+        let todosGastosDoMes = gastos.filter(gasto => obterCompetenciaGasto(gasto) === mesFiltro);
         todosGastosDoMes.forEach(g => somaSaidasGeral += parseFloat(g.valor));
         document.getElementById('total-saidas-tab').innerText = formatarMoeda(somaSaidasGeral);
 
@@ -2310,14 +2366,16 @@
                 </div>`;
             }
             
+            const compRefGasto = obterCompetenciaGasto(gasto);
             let btnExcluir = '';
             if (!estaBloqueado) { 
-                const btnEditar = `<button type="button" class="btn-icon btn-icon-edit" onclick="window.editarGasto('${gasto.id}', '${gasto.data}')" title="Editar">${iconEdit}</button>`;
-                btnExcluir = `${btnEditar} <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirGasto('${gasto.id}', '${gasto.data}')" title="Excluir">${iconTrash}</button>`; 
+                const btnEditar = `<button type="button" class="btn-icon btn-icon-edit" onclick="window.editarGasto('${gasto.id}', '${compRefGasto}')" title="Editar">${iconEdit}</button>`;
+                btnExcluir = `${btnEditar} <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirGasto('${gasto.id}', '${compRefGasto}')" title="Excluir">${iconTrash}</button>`; 
             } 
             else { btnExcluir = '<span style="color:var(--text-muted); font-size:11px;">Bloqueado</span>'; }
             
-            tr.innerHTML = `<td><strong>${gasto.categoria}</strong> ${htmlDesc}<br>${htmlVinculo}</td><td style="font-size:12px;">${formatarData(gasto.data)}</td><td style="font-weight:600;">${formatarMoeda(gasto.valor)}</td><td><div class="action-flex">${btnExcluir}</div></td>`;
+            const badgeComp = `<span style="display:inline-block; font-size:10px; font-weight:700; color:var(--brand-dark); background:var(--brand-pale); padding:1px 6px; border-radius:4px; margin-top:3px;">Comp: ${formatarMesCompetenciaCurto(compRefGasto)}</span>`;
+            tr.innerHTML = `<td><strong>${gasto.categoria}</strong> ${htmlDesc}<br>${htmlVinculo}</td><td style="font-size:12px;">${formatarData(gasto.data)}<br>${badgeComp}</td><td style="font-weight:600;">${formatarMoeda(gasto.valor)}</td><td><div class="action-flex">${btnExcluir}</div></td>`;
             tbody.appendChild(tr);
         });
 
@@ -2374,11 +2432,12 @@
 
     document.getElementById('form-gasto').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const competenciaForm = document.getElementById('gasto-competencia').value || document.getElementById('filtro-mes-lancamento').value;
         const dataForm = document.getElementById('gasto-data').value;
-        const mesFiltroAtual = document.getElementById('filtro-mes-lancamento').value;
         
-        if (!dataForm.startsWith(mesFiltroAtual)) { alert(`Data inválida. O documento deve pertencer à competência ativa (${mesFiltroAtual}).`); return; }
-        if(isMesBloqueadoVerificacao(dataForm)) { alert("Lançamento bloqueado: Competência encerrada!"); return; }
+        if (!competenciaForm) { alert("Por favor, selecione o mês de competência."); return; }
+        if (!dataForm) { alert("Por favor, informe a data da ocorrência."); return; }
+        if (isMesBloqueadoVerificacao(competenciaForm)) { alert("Lançamento bloqueado: A competência selecionada está encerrada!"); return; }
         
         const valorDigitado = document.getElementById('gasto-valor').value;
         const valorNumerico = window.converterMoedaParaFloat(valorDigitado);
@@ -2391,8 +2450,10 @@
         const maxOrdemAtual = gastos.reduce((max, item) => Math.max(max, item._ordem || 0), 0);
         const updateObj = { 
             categoria: document.getElementById('gasto-categoria').value, 
+            competencia: competenciaForm,
             descricao: document.getElementById('gasto-desc').value.toUpperCase(), 
-            valor: valorNumerico, data: dataForm,
+            valor: valorNumerico,
+            data: dataForm,
             veiculo: blocoVDisp ? document.getElementById('gasto-veiculo').value : null,
             funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null,
             criadoEm: Date.now()
@@ -2402,7 +2463,18 @@
             updateObj.id = docRef.id;
             updateObj._ordem = maxOrdemAtual + 1;
             gastos.push(updateObj); 
-            this.reset(); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos(); 
+            this.reset();
+            const selectComp = document.getElementById('gasto-competencia');
+            if (selectComp) selectComp.value = competenciaForm;
+            // Se lançou para uma competência diferente da que estava selecionada na barra lateral, sincroniza a visualização
+            if (document.getElementById('filtro-mes-lancamento').value !== competenciaForm) {
+                document.getElementById('filtro-mes-lancamento').value = competenciaForm;
+                window.mudarMesLancamento();
+            } else {
+                window.verificarVinculosCategoria();
+                atualizarDashboardPrincipal();
+                window.renderizarGastos();
+            }
         } catch(e) { console.error(e); }
     });
 
@@ -2421,7 +2493,11 @@
     function preencherAnosFiltro() {
         const anos = new Set();
         notasFiscais.forEach(nf => { if(nf.dataRecebimento) anos.add(nf.dataRecebimento.split('-')[0]); });
-        gastos.forEach(gasto => { if(gasto.data) anos.add(gasto.data.split('-')[0]); });
+        gastos.forEach(gasto => {
+            const comp = obterCompetenciaGasto(gasto);
+            if (comp) anos.add(comp.split('-')[0]);
+            if (gasto.data) anos.add(gasto.data.split('-')[0]);
+        });
         anos.add(new Date().getFullYear().toString());
         const selectAno = document.getElementById('filtro-ano');
         const anoAntes = selectAno.value; selectAno.innerHTML = '';
@@ -2450,7 +2526,8 @@
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(mesAnoSelecionado)) totalEntradas += parseFloat(nf.valor); });
         
         gastos.forEach(gasto => {
-            if (gasto.data && gasto.data.startsWith(mesAnoSelecionado)) {
+            const compGasto = obterCompetenciaGasto(gasto);
+            if (compGasto && compGasto === mesAnoSelecionado) {
                 const valorGasto = parseFloat(gasto.valor);
                 const cat = gasto.categoria || 'OUTROS';
                 const catObj = categoriasDB.find(c => c.nome === cat);
@@ -2495,7 +2572,8 @@
             }
         });
         gastos.forEach(g => {
-            if (g.data && g.data <= dataLimite) {
+            const compG = obterCompetenciaGasto(g);
+            if (compG && compG <= mesAnoSelecionado) {
                 saldoFimMes -= parseFloat(g.valor);
             }
         });
@@ -2532,13 +2610,14 @@
         notasFiscais.forEach(nf => { if (nf.status === 'pago' && nf.dataRecebimento && nf.dataRecebimento.startsWith(ano)) { entradasMes[parseInt(nf.dataRecebimento.split('-')[1]) - 1] += parseFloat(nf.valor); totalEntradas += parseFloat(nf.valor); } });
         
         gastos.forEach(gasto => { 
-            if (gasto.data && gasto.data.startsWith(ano)) { 
+            const compGasto = obterCompetenciaGasto(gasto);
+            if (compGasto && compGasto.startsWith(ano)) { 
                 const valorGasto = parseFloat(gasto.valor);
                 const catObj = categoriasDB.find(c => c.nome === gasto.categoria);
                 const isIgnorada = Boolean(catObj && catObj.ignoraLiquido);
 
                 if (!isIgnorada || !ocultarIgnoradas) {
-                    saidasMes[parseInt(gasto.data.split('-')[1]) - 1] += valorGasto; 
+                    saidasMes[parseInt(compGasto.split('-')[1], 10) - 1] += valorGasto; 
                     totalSaidas += valorGasto; 
                     totalSaidasGrafico += valorGasto;
                 }
@@ -2657,13 +2736,14 @@
         let periodoTexto = "";
 
         if (modoPeriodo === 'mes') {
-            gastosFiltrados = gastos.filter(g => g.categoria === catSelecionada && g.data && g.data.startsWith(mesAnoSelecionado));
+            gastosFiltrados = gastos.filter(g => g.categoria === catSelecionada && obterCompetenciaGasto(g) === mesAnoSelecionado);
             periodoTexto = `${mesStr}/${anoStr}`;
         } else {
             gastosFiltrados = gastos.filter(g => {
-                if (g.categoria !== catSelecionada || !g.data) return false;
-                const gAno = g.data.substring(0,4);
-                const gMes = g.data.substring(5,7);
+                const compG = obterCompetenciaGasto(g);
+                if (g.categoria !== catSelecionada || !compG) return false;
+                const gAno = compG.substring(0,4);
+                const gMes = compG.substring(5,7);
                 return (gAno === anoStr && gMes <= mesStr);
             });
             periodoTexto = `Jan a ${mesStr}/${anoStr}`;
