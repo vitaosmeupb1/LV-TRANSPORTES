@@ -269,6 +269,11 @@
     .totalizador-destaque { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
     .total-entrada { color: #16805d; background: var(--success-pale); border: 1px solid #c8eddf; }
     .total-saida { color: #bb4d4d; background: var(--danger-pale); border: 1px solid #f1d2d2; }
+    .saidas-mini-totais-bar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); margin-top: -16px; margin-bottom: 24px; }
+    .saidas-mini-card { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; background: var(--surface-soft); border: 1px solid var(--line); font-size: 11.5px; color: var(--muted); font-weight: 600; }
+    .saidas-mini-card strong { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); }
+    .saidas-mini-card.destaque-saida { background: var(--danger-pale); border-color: #f1d2d2; color: #9c3f3f; }
+    .saidas-mini-card.destaque-saida strong { color: var(--danger); font-size: 13.5px; }
     .action-flex { display: flex; align-items: center; gap: 6px; }
     .btn-icon { min-width: 29px; min-height: 29px; display: inline-flex; align-items: center; justify-content: center; padding: 5px 8px; border: 0; border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .2s; }
     .btn-icon:hover { transform: translateY(-1px); filter: brightness(.96); }
@@ -740,12 +745,27 @@
 
                         <div class="section-heading" style="margin-bottom: 12px;"><div><h2>Despesas Lançadas</h2><p>Listagem de custos da competência.</p></div></div>
                         
-                        <div class="filters-panel" style="margin-bottom: 16px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-                            <div class="filter-item" style="min-width: 250px;">
-                                <label for="filtro-tabela-categoria">Filtrar por Categoria Específica</label>
-                                <select id="filtro-tabela-categoria" class="form-control" onchange="window.renderizarGastos()">
-                                    <option value="">Todas as categorias</option>
-                                </select>
+                        <div class="filters-panel" style="margin-bottom: 16px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; flex: 1;">
+                                <div class="filter-item" style="min-width: 210px; flex: 1;">
+                                    <label for="filtro-tabela-categoria">Filtrar por Categoria Específica</label>
+                                    <select id="filtro-tabela-categoria" class="form-control" onchange="window.renderizarGastos()">
+                                        <option value="">Todas as categorias</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item" style="min-width: 165px;">
+                                    <label for="filtro-tabela-data">Filtrar por Data</label>
+                                    <input type="date" id="filtro-tabela-data" class="form-control" onchange="window.renderizarGastos()">
+                                </div>
+                                <div class="filter-item" style="min-width: 200px; flex: 1;">
+                                    <label for="filtro-tabela-funcionario">Filtrar por Funcionário</label>
+                                    <select id="filtro-tabela-funcionario" class="form-control" onchange="window.renderizarGastos()">
+                                        <option value="">Todos os funcionários</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; align-items: center; padding-bottom: 2px;">
+                                    <button type="button" id="btn-limpar-filtros-saidas" class="btn" style="min-height: 38px; background: var(--surface-soft); border: 1px solid var(--line); color: var(--muted); display: none;" onclick="window.limparFiltrosSaidas()">Limpar filtros</button>
+                                </div>
                             </div>
                             <div style="display: flex; align-items: center; padding-bottom: 10px;">
                                 <label class="custom-checkbox">
@@ -757,6 +777,22 @@
 
                         <div class="table-responsive">
                             <table><thead><tr><th onclick="window.ordenarGastos('categoria')" class="sortable">Categoria ↕</th><th onclick="window.ordenarGastos('data')" class="sortable">Data ↕</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-gastos"></tbody></table>
+                        </div>
+
+                        <div class="saidas-mini-totais-bar" id="rodape-totais-saidas">
+                            <span id="resumo-filtro-saidas-label" style="margin-right: auto; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em;">Resumo (Todos da competência)</span>
+                            <div class="saidas-mini-card">
+                                <span>Lançamentos:</span>
+                                <strong id="mini-total-qtd-saidas">0</strong>
+                            </div>
+                            <div class="saidas-mini-card">
+                                <span>Média p/ lançamento:</span>
+                                <strong id="mini-total-media-saidas">R$ 0,00</strong>
+                            </div>
+                            <div class="saidas-mini-card destaque-saida">
+                                <span>Total filtrado:</span>
+                                <strong id="mini-total-valor-saidas">R$ 0,00</strong>
+                            </div>
                         </div>
                     </div>
 
@@ -1316,7 +1352,11 @@
             queryNFs.forEach(doc => notasFiscais.push({ id: doc.id, ...doc.data() }));
 
             const queryGastos = await getDocs(collection(db, "gastos"));
-            queryGastos.forEach(doc => gastos.push({ id: doc.id, ...doc.data() }));
+            let idxOrdemGasto = 0;
+            queryGastos.forEach(doc => {
+                idxOrdemGasto += 1;
+                gastos.push({ id: doc.id, _ordem: idxOrdemGasto, ...doc.data() });
+            });
 
             const queryBloqueios = await getDocs(collection(db, "mesesBloqueados"));
             queryBloqueios.forEach(doc => mesesBloqueados.push({ id: doc.id, mes: doc.data().mes }));
@@ -1331,8 +1371,10 @@
             try {
                 const queryAnotacoes = await getDocs(collection(db, "anotacoes"));
                 queryAnotacoes.forEach(doc => anotacoesDB.push({ id: doc.id, ...doc.data() }));
+                salvarAnotacoesLocalFallback();
             } catch (errNotas) {
                 console.warn("Coleção anotacoes:", errNotas);
+                anotacoesDB = carregarAnotacoesLocalFallback();
             }
             window.atualizarBadgeAnotacoes();
             
@@ -1427,6 +1469,17 @@
             selectEditFuncionario.innerHTML = '<option value="">Selecione o Funcionário...</option>';
             funcionariosDB.forEach(f => { selectEditFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
             selectEditFuncionario.value = valF;
+        }
+
+        const selectFiltroFunc = document.getElementById('filtro-tabela-funcionario');
+        if (selectFiltroFunc) {
+            const valFiltroAntigo = selectFiltroFunc.value;
+            selectFiltroFunc.innerHTML = '<option value="">Todos os funcionários</option>';
+            funcionariosDB.forEach(f => {
+                const nomeComp = `${f.nome} ${f.sobrenome}`.trim();
+                selectFiltroFunc.innerHTML += `<option value="${nomeComp}">${nomeComp}</option>`;
+            });
+            selectFiltroFunc.value = valFiltroAntigo;
         }
     }
 
@@ -1920,6 +1973,15 @@
             dataInput.min = `${mesSelecionado}-01`;
             dataInput.max = `${mesSelecionado}-${ultimoDia}`;
             if (dataInput.value && !dataInput.value.startsWith(mesSelecionado)) { dataInput.value = ''; }
+
+            const filtroDataTabela = document.getElementById('filtro-tabela-data');
+            if (filtroDataTabela) {
+                filtroDataTabela.min = `${mesSelecionado}-01`;
+                filtroDataTabela.max = `${mesSelecionado}-${ultimoDia}`;
+                if (filtroDataTabela.value && !filtroDataTabela.value.startsWith(mesSelecionado)) {
+                    filtroDataTabela.value = '';
+                }
+            }
         }
 
         if (isBloqueado) {
@@ -2139,6 +2201,27 @@
         document.querySelectorAll('.icon-only-info').forEach(el => { el.style.display = isChecked ? 'none' : 'inline-flex'; });
     };
 
+    window.limparFiltrosSaidas = function() {
+        const elCat = document.getElementById('filtro-tabela-categoria');
+        const elData = document.getElementById('filtro-tabela-data');
+        const elFunc = document.getElementById('filtro-tabela-funcionario');
+        if (elCat) elCat.value = '';
+        if (elData) elData.value = '';
+        if (elFunc) elFunc.value = '';
+        window.renderizarGastos();
+    };
+
+    function compararOrdemLancamento(a, b) {
+        const tA = a.criadoEm ? Number(a.criadoEm) : null;
+        const tB = b.criadoEm ? Number(b.criadoEm) : null;
+        if (tA !== null && tB !== null && tA !== tB) return tA - tB;
+        if (tA !== null && tB === null) return 1;
+        if (tA === null && tB !== null) return -1;
+        const ordA = a._ordem || 0;
+        const ordB = b._ordem || 0;
+        return ordA - ordB;
+    }
+
     window.renderizarGastos = function() {
         const tbody = document.getElementById('tabela-gastos'); tbody.innerHTML = '';
         const mesFiltro = document.getElementById('filtro-mes-lancamento').value;
@@ -2149,17 +2232,63 @@
         todosGastosDoMes.forEach(g => somaSaidasGeral += parseFloat(g.valor));
         document.getElementById('total-saidas-tab').innerText = formatarMoeda(somaSaidasGeral);
 
-        const filtroCat = document.getElementById('filtro-tabela-categoria')?.value;
-        let gastosFiltrados = todosGastosDoMes;
-        if (filtroCat) { gastosFiltrados = gastosFiltrados.filter(g => g.categoria === filtroCat); }
+        // Garantir que o select de filtro de funcionário contenha também funcionários já vinculados no mês
+        const selectFiltroFunc = document.getElementById('filtro-tabela-funcionario');
+        if (selectFiltroFunc) {
+            const valorFuncSelecionado = selectFiltroFunc.value;
+            const nomesFuncs = new Set();
+            funcionariosDB.forEach(f => {
+                const n = `${f.nome || ''} ${f.sobrenome || ''}`.trim();
+                if (n) nomesFuncs.add(n);
+            });
+            todosGastosDoMes.forEach(g => {
+                if (g.funcionario && g.funcionario.trim()) nomesFuncs.add(g.funcionario.trim());
+            });
+            selectFiltroFunc.innerHTML = '<option value="">Todos os funcionários</option>';
+            Array.from(nomesFuncs).sort((a, b) => a.localeCompare(b)).forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome;
+                opt.textContent = nome;
+                selectFiltroFunc.appendChild(opt);
+            });
+            if (valorFuncSelecionado && nomesFuncs.has(valorFuncSelecionado)) {
+                selectFiltroFunc.value = valorFuncSelecionado;
+            }
+        }
 
+        const filtroCat = document.getElementById('filtro-tabela-categoria')?.value || '';
+        const filtroData = document.getElementById('filtro-tabela-data')?.value || '';
+        const filtroFunc = document.getElementById('filtro-tabela-funcionario')?.value || '';
+
+        const btnLimpar = document.getElementById('btn-limpar-filtros-saidas');
+        if (btnLimpar) {
+            btnLimpar.style.display = (filtroCat || filtroData || filtroFunc) ? 'inline-flex' : 'none';
+        }
+
+        let gastosFiltrados = todosGastosDoMes;
+        if (filtroCat) {
+            gastosFiltrados = gastosFiltrados.filter(g => g.categoria === filtroCat);
+        }
+        if (filtroData) {
+            gastosFiltrados = gastosFiltrados.filter(g => g.data === filtroData);
+        }
+        if (filtroFunc) {
+            gastosFiltrados = gastosFiltrados.filter(g => (g.funcionario || '').trim() === filtroFunc);
+        }
+
+        // Ordena pela Data de Competência (ou Categoria se clicado no cabeçalho) e, para a mesma data, sempre por quem foi lançado primeiro
         gastosFiltrados.sort((a, b) => {
-            let valorA, valorB;
-            if (sortByGastos === 'categoria') { valorA = (a.categoria || '').toLowerCase(); valorB = (b.categoria || '').toLowerCase(); } 
-            else if (sortByGastos === 'data') { valorA = a.data; valorB = b.data; }
-            if (valorA < valorB) return sortAscGastos ? -1 : 1;
-            if (valorA > valorB) return sortAscGastos ? 1 : -1;
-            return 0;
+            if (sortByGastos === 'categoria') {
+                const catA = (a.categoria || '').toLowerCase();
+                const catB = (b.categoria || '').toLowerCase();
+                if (catA < catB) return sortAscGastos ? -1 : 1;
+                if (catA > catB) return sortAscGastos ? 1 : -1;
+            }
+            const dataA = a.data || '';
+            const dataB = b.data || '';
+            if (dataA < dataB) return sortAscGastos ? -1 : 1;
+            if (dataA > dataB) return sortAscGastos ? 1 : -1;
+            return compararOrdemLancamento(a, b);
         });
 
         const exibirHistorico = document.getElementById('toggle-historico-global')?.checked || false;
@@ -2191,6 +2320,30 @@
             tr.innerHTML = `<td><strong>${gasto.categoria}</strong> ${htmlDesc}<br>${htmlVinculo}</td><td style="font-size:12px;">${formatarData(gasto.data)}</td><td style="font-weight:600;">${formatarMoeda(gasto.valor)}</td><td><div class="action-flex">${btnExcluir}</div></td>`;
             tbody.appendChild(tr);
         });
+
+        // Atualizar totalizadores pequenos no final da página conforme filtro aplicado
+        let somaFiltrada = 0;
+        gastosFiltrados.forEach(g => somaFiltrada += (parseFloat(g.valor) || 0));
+        const qtdFiltrada = gastosFiltrados.length;
+        const mediaFiltrada = qtdFiltrada > 0 ? (somaFiltrada / qtdFiltrada) : 0;
+
+        const elQtd = document.getElementById('mini-total-qtd-saidas');
+        const elMedia = document.getElementById('mini-total-media-saidas');
+        const elValor = document.getElementById('mini-total-valor-saidas');
+        const elLabel = document.getElementById('resumo-filtro-saidas-label');
+
+        if (elQtd) elQtd.innerText = String(qtdFiltrada);
+        if (elMedia) elMedia.innerText = formatarMoeda(mediaFiltrada);
+        if (elValor) elValor.innerText = formatarMoeda(somaFiltrada);
+        if (elLabel) {
+            const partesFiltro = [];
+            if (filtroCat) partesFiltro.push(`Categoria: ${filtroCat}`);
+            if (filtroData) partesFiltro.push(`Data: ${formatarData(filtroData)}`);
+            if (filtroFunc) partesFiltro.push(`Funcionário: ${filtroFunc}`);
+            elLabel.innerText = partesFiltro.length > 0
+                ? `Resumo filtrado (${partesFiltro.join(' · ')})`
+                : 'Resumo (Todos da competência)';
+        }
     };
 
     document.getElementById('form-nf').addEventListener('submit', async function(e) {
@@ -2235,15 +2388,20 @@
         const blocoVDisp = document.getElementById('bloco-veiculo').style.display !== 'none';
         const blocoFDisp = document.getElementById('bloco-funcionario').style.display !== 'none';
 
+        const maxOrdemAtual = gastos.reduce((max, item) => Math.max(max, item._ordem || 0), 0);
         const updateObj = { 
             categoria: document.getElementById('gasto-categoria').value, 
             descricao: document.getElementById('gasto-desc').value.toUpperCase(), 
             valor: valorNumerico, data: dataForm,
             veiculo: blocoVDisp ? document.getElementById('gasto-veiculo').value : null,
-            funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null
+            funcionario: blocoFDisp ? document.getElementById('gasto-funcionario').value : null,
+            criadoEm: Date.now()
         };
         try { 
-            const docRef = await addDoc(collection(db, "gastos"), updateObj); updateObj.id = docRef.id; gastos.push(updateObj); 
+            const docRef = await addDoc(collection(db, "gastos"), updateObj);
+            updateObj.id = docRef.id;
+            updateObj._ordem = maxOrdemAtual + 1;
+            gastos.push(updateObj); 
             this.reset(); window.verificarVinculosCategoria(); atualizarDashboardPrincipal(); window.renderizarGastos(); 
         } catch(e) { console.error(e); }
     });
