@@ -267,6 +267,7 @@
     .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
     .badge-warning { color: #a86d1b; background: var(--warning-pale); }
     .badge-success { color: #16805d; background: var(--success-pale); }
+    .badge-inactive { color: #64748b; background: #edf2f7; }
     .totalizador-destaque { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
     .total-entrada { color: #16805d; background: var(--success-pale); border: 1px solid #c8eddf; }
     .total-saida { color: #bb4d4d; background: var(--danger-pale); border: 1px solid #f1d2d2; }
@@ -281,6 +282,12 @@
     .btn-icon-success { background: var(--success); }
     .btn-icon-danger { background: var(--danger); }
     .btn-icon-edit { background: #eab308; }
+    .btn-icon-warning { background: var(--warning); }
+    .btn-icon-reactivate { background: var(--success); }
+    .btn-icon-blocked { background: #cbd5e1; color: #64748b; cursor: not-allowed; }
+    .btn-icon-blocked:hover { transform: none; filter: none; }
+    tr.row-inativo td { opacity: .62; background: #f9fbfc; }
+    tr.row-inativo:hover td { opacity: .88; }
     .btn-icon-info { min-width: 22px; min-height: 22px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; color: #fff; background: var(--info); font-size: 10px; font-weight: 700; cursor: pointer; vertical-align: middle; }
 
     /* Config view */
@@ -830,7 +837,7 @@
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
-                                            <thead><tr><th>Nome da categoria</th><th>Vínculos e Regras</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
+                                            <thead><tr><th>Nome da categoria</th><th>Vínculos e Regras</th><th style="width: 100px;">Status</th><th style="width: 135px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-categorias"></tbody>
                                         </table>
                                     </div>
@@ -855,7 +862,7 @@
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
-                                            <thead><tr><th>Marca / modelo</th><th>Placa</th><th>Cor</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
+                                            <thead><tr><th>Marca / modelo</th><th>Placa</th><th>Cor</th><th style="width: 100px;">Status</th><th style="width: 135px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-veiculos"></tbody>
                                         </table>
                                     </div>
@@ -879,7 +886,7 @@
                                     </form>
                                     <div class="table-responsive" style="margin-top: 25px; margin-bottom: 0;">
                                         <table>
-                                            <thead><tr><th>Nome Completo</th><th style="width: 100px; text-align:center;">Ações</th></tr></thead>
+                                            <thead><tr><th>Nome Completo</th><th style="width: 100px;">Status</th><th style="width: 135px; text-align:center;">Ações</th></tr></thead>
                                             <tbody id="tabela-funcionarios"></tbody>
                                         </table>
                                     </div>
@@ -1132,6 +1139,8 @@
 
     const iconEdit = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
     const iconTrash = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    const iconInativar = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>`;
+    const iconReativar = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
 
     window.toggleSidebar = function(forceCollapse) {
         const layout = document.querySelector('.app-layout');
@@ -1274,6 +1283,72 @@
         }
     };
 
+    function categoriaJaUsada(cat) {
+        if (!cat) return false;
+        const nomeAlvo = (cat.nome || '').trim().toUpperCase();
+        return gastos.some(g => (g.categoria || '').trim().toUpperCase() === nomeAlvo);
+    }
+
+    function veiculoJaUsado(veiculo) {
+        if (!veiculo) return false;
+        const rotuloAlvo = `${veiculo.marcaModelo || ''} - ${veiculo.placa || ''}`.trim().toUpperCase();
+        const placaAlvo = (veiculo.placa || '').trim().toUpperCase();
+        return gastos.some(g => {
+            if (g.veiculoId && g.veiculoId === veiculo.id) return true;
+            const gVeic = (g.veiculo || '').trim().toUpperCase();
+            if (!gVeic) return false;
+            if (gVeic === rotuloAlvo) return true;
+            if (placaAlvo && gVeic.includes(placaAlvo)) return true;
+            return false;
+        });
+    }
+
+    function funcionarioJaUsado(funcionario) {
+        if (!funcionario) return false;
+        const nomeAlvo = `${funcionario.nome || ''} ${funcionario.sobrenome || ''}`.trim().toUpperCase();
+        return gastos.some(g => {
+            if (g.funcionarioId && g.funcionarioId === funcionario.id) return true;
+            const gFunc = (g.funcionario || '').trim().toUpperCase();
+            return gFunc !== '' && gFunc === nomeAlvo;
+        });
+    }
+
+    async function verificarUsoNaProducao(tipo, item) {
+        if (!item) return false;
+        try {
+            const snap = await getDocs(collection(db, "producao_lancamentos"));
+            const idAlvo = item.id;
+            if (tipo === 'veiculo') {
+                const rotuloAlvo = `${item.marcaModelo || ''} - ${item.placa || ''}`.trim().toUpperCase();
+                const placaAlvo = (item.placa || '').trim().toUpperCase();
+                for (const d of snap.docs) {
+                    const data = d.data() || {};
+                    if (data.veiculoId === idAlvo) return true;
+                    const campos = [data.veiculo, data.placa, data.veiculoNome];
+                    for (const val of campos) {
+                        const s = String(val || '').trim().toUpperCase();
+                        if (!s) continue;
+                        if (s === rotuloAlvo || (placaAlvo && s.includes(placaAlvo))) return true;
+                    }
+                }
+            } else if (tipo === 'funcionario') {
+                const nomeAlvo = `${item.nome || ''} ${item.sobrenome || ''}`.trim().toUpperCase();
+                for (const d of snap.docs) {
+                    const data = d.data() || {};
+                    if (data.motoristaId === idAlvo || data.ajudanteId === idAlvo || data.funcionarioId === idAlvo) return true;
+                    const campos = [data.motorista, data.ajudante, data.funcionario, data.nome];
+                    for (const val of campos) {
+                        const s = String(val || '').trim().toUpperCase();
+                        if (s && s === nomeAlvo) return true;
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn("Verificação opcional em producao_lancamentos indisponível:", err);
+        }
+        return false;
+    }
+
     window.excluirGasto = async function(id, dataRef) {
         if(isMesBloqueadoVerificacao(dataRef)) { alert("Operação bloqueada: O período está encerrado!"); return; }
         if(!confirm("Tem certeza que deseja excluir permanentemente esta despesa?")) return;
@@ -1283,13 +1358,80 @@
             gastos = gastos.filter(g => g.id !== id);
             atualizarDashboardPrincipal();
             window.renderizarGastos();
+            renderizarListasDeCategorias();
+            renderizarListaVeiculos();
+            renderizarListaFuncionarios();
         } catch(e) {
             console.error("Erro ao excluir gasto:", e);
             alert("Ocorreu um erro ao excluir a despesa.");
         }
     };
 
+    window.toggleAtivoCategoria = async function(id) {
+        const cat = categoriasDB.find(c => c.id === id);
+        if (!cat) return;
+        const novoStatus = !(cat.ativo !== false);
+        const msg = novoStatus
+            ? `Deseja REATIVAR a categoria "${cat.nome}"? Ela voltará a aparecer em novos lançamentos.`
+            : `Deseja INATIVAR a categoria "${cat.nome}"? Ela não aparecerá em novos lançamentos, mas todo o histórico será preservado.`;
+        if (!confirm(msg)) return;
+        try {
+            await updateDoc(doc(db, "categoriasGasto", id), { ativo: novoStatus });
+            cat.ativo = novoStatus;
+            renderizarListasDeCategorias();
+            window.verificarVinculosCategoria();
+        } catch (e) {
+            console.error("Erro ao alterar status da categoria:", e);
+            alert("Erro ao atualizar o status da categoria.");
+        }
+    };
+
+    window.toggleAtivoVeiculo = async function(id) {
+        const v = veiculosDB.find(item => item.id === id);
+        if (!v) return;
+        const novoStatus = !(v.ativo !== false);
+        const rotulo = `${v.marcaModelo || ''} (${v.placa || ''})`.trim();
+        const msg = novoStatus
+            ? `Deseja REATIVAR o veículo "${rotulo}"? Ele voltará a aparecer em novos lançamentos.`
+            : `Deseja INATIVAR o veículo "${rotulo}"? Ele não aparecerá em novos lançamentos, mas todo o histórico será preservado.`;
+        if (!confirm(msg)) return;
+        try {
+            await updateDoc(doc(db, "veiculos", id), { ativo: novoStatus });
+            v.ativo = novoStatus;
+            renderizarListaVeiculos();
+            popularSelectsVinculos();
+        } catch (e) {
+            console.error("Erro ao alterar status do veículo:", e);
+            alert("Erro ao atualizar o status do veículo.");
+        }
+    };
+
+    window.toggleAtivoFuncionario = async function(id) {
+        const f = funcionariosDB.find(item => item.id === id);
+        if (!f) return;
+        const novoStatus = !(f.ativo !== false);
+        const nomeComp = `${f.nome || ''} ${f.sobrenome || ''}`.trim();
+        const msg = novoStatus
+            ? `Deseja REATIVAR o funcionário "${nomeComp}"? Ele voltará a aparecer em novos lançamentos.`
+            : `Deseja INATIVAR o funcionário "${nomeComp}"? Ele não aparecerá em novos lançamentos, mas todo o histórico será preservado.`;
+        if (!confirm(msg)) return;
+        try {
+            await updateDoc(doc(db, "funcionarios", id), { ativo: novoStatus });
+            f.ativo = novoStatus;
+            renderizarListaFuncionarios();
+            popularSelectsVinculos();
+        } catch (e) {
+            console.error("Erro ao alterar status do funcionário:", e);
+            alert("Erro ao atualizar o status do funcionário.");
+        }
+    };
+
     window.excluirCategoria = async function(id) {
+        const cat = categoriasDB.find(c => c.id === id);
+        if (cat && categoriaJaUsada(cat)) {
+            alert(`Não é possível excluir a categoria "${cat.nome}" porque ela já foi utilizada em lançamentos do sistema. Utilize a opção Inativar para impedir novos usos preservando o histórico.`);
+            return;
+        }
         if(!confirm("Tem certeza que deseja excluir esta categoria?")) return;
         try {
             await deleteDoc(doc(db, "categoriasGasto", id));
@@ -1302,10 +1444,15 @@
     };
 
     window.excluirVeiculo = async function(id) {
+        const v = veiculosDB.find(item => item.id === id);
+        if (v && (veiculoJaUsado(v) || await verificarUsoNaProducao('veiculo', v))) {
+            alert(`Não é possível excluir o veículo "${v.marcaModelo} - ${v.placa}" porque ele já foi utilizado no sistema. Utilize a opção Inativar para impedir novos usos preservando o histórico.`);
+            return;
+        }
         if(!confirm("Tem certeza que deseja excluir este veículo?")) return;
         try {
             await deleteDoc(doc(db, "veiculos", id));
-            veiculosDB = veiculosDB.filter(v => v.id !== id);
+            veiculosDB = veiculosDB.filter(item => item.id !== id);
             renderizarListaVeiculos();
             popularSelectsVinculos();
         } catch(e) {
@@ -1315,10 +1462,15 @@
     };
 
     window.excluirFuncionario = async function(id) {
+        const f = funcionariosDB.find(item => item.id === id);
+        if (f && (funcionarioJaUsado(f) || await verificarUsoNaProducao('funcionario', f))) {
+            alert(`Não é possível excluir o funcionário "${f.nome} ${f.sobrenome}" porque ele já foi utilizado no sistema. Utilize a opção Inativar para impedir novos usos preservando o histórico.`);
+            return;
+        }
         if(!confirm("Tem certeza que deseja excluir este funcionário?")) return;
         try {
             await deleteDoc(doc(db, "funcionarios", id));
-            funcionariosDB = funcionariosDB.filter(f => f.id !== id);
+            funcionariosDB = funcionariosDB.filter(item => item.id !== id);
             renderizarListaFuncionarios();
             popularSelectsVinculos();
         } catch(e) {
@@ -1392,7 +1544,8 @@
                 nome: doc.data().nome, 
                 pedeVeiculo: doc.data().pedeVeiculo || false, 
                 pedeFuncionario: doc.data().pedeFuncionario || false,
-                ignoraLiquido: doc.data().ignoraLiquido || false
+                ignoraLiquido: doc.data().ignoraLiquido || false,
+                ativo: doc.data().ativo !== false
             }));
             
             const queryNFs = await getDocs(collection(db, "notasFiscais"));
@@ -1409,10 +1562,10 @@
             queryBloqueios.forEach(doc => mesesBloqueados.push({ id: doc.id, mes: doc.data().mes }));
 
             const queryVeiculos = await getDocs(collection(db, "veiculos"));
-            queryVeiculos.forEach(doc => veiculosDB.push({ id: doc.id, ...doc.data() }));
+            queryVeiculos.forEach(doc => veiculosDB.push({ id: doc.id, ...doc.data(), ativo: doc.data().ativo !== false }));
 
             const queryFuncionarios = await getDocs(collection(db, "funcionarios"));
-            queryFuncionarios.forEach(doc => funcionariosDB.push({ id: doc.id, ...doc.data() }));
+            queryFuncionarios.forEach(doc => funcionariosDB.push({ id: doc.id, ...doc.data(), ativo: doc.data().ativo !== false }));
 
             anotacoesDB = [];
             try {
@@ -1442,19 +1595,28 @@
     }
 
     function renderizarListasDeCategorias() {
-        categoriasDB.sort((a, b) => a.nome.localeCompare(b.nome));
+        categoriasDB.sort((a, b) => {
+            const diffStatus = (a.ativo === false ? 1 : 0) - (b.ativo === false ? 1 : 0);
+            return diffStatus !== 0 ? diffStatus : a.nome.localeCompare(b.nome);
+        });
+        const categoriasAtivas = categoriasDB.filter(cat => cat.ativo !== false);
 
         const selectCat = document.getElementById('gasto-categoria');
         if(selectCat) {
+            const valAtual = selectCat.value;
             selectCat.innerHTML = '<option value="">Selecione a Categoria...</option>';
-            categoriasDB.forEach(cat => { selectCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            categoriasAtivas.forEach(cat => { selectCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            if (categoriasAtivas.some(c => c.nome === valAtual)) selectCat.value = valAtual;
         }
 
         const selectEditCat = document.getElementById('edit-gasto-categoria');
         if(selectEditCat) {
             const valEditAntigo = selectEditCat.value;
             selectEditCat.innerHTML = '<option value="">Selecione a Categoria...</option>';
-            categoriasDB.forEach(cat => { selectEditCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            categoriasAtivas.forEach(cat => { selectEditCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            if (valEditAntigo && !categoriasAtivas.some(c => c.nome === valEditAntigo)) {
+                selectEditCat.innerHTML += `<option value="${valEditAntigo}">${valEditAntigo} (Inativa)</option>`;
+            }
             selectEditCat.value = valEditAntigo;
         }
 
@@ -1462,7 +1624,10 @@
         if(selectFiltroCat) {
             const valAntigo = selectFiltroCat.value;
             selectFiltroCat.innerHTML = '<option value="">Todas as categorias</option>';
-            categoriasDB.forEach(cat => { selectFiltroCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`; });
+            categoriasDB.forEach(cat => {
+                const sufixo = cat.ativo === false ? ' (Inativa)' : '';
+                selectFiltroCat.innerHTML += `<option value="${cat.nome}">${cat.nome}${sufixo}</option>`;
+            });
             selectFiltroCat.value = valAntigo; 
         }
 
@@ -1470,18 +1635,29 @@
         if(tbodyConf) {
             tbodyConf.innerHTML = '';
             categoriasDB.forEach(cat => {
+                const isAtivo = cat.ativo !== false;
+                const emUso = categoriaJaUsada(cat);
                 const bVeiculo = cat.pedeVeiculo ? '<span class="badge-vinculo badge-v-sim">🚗 Veículo</span>' : '<span class="badge-vinculo badge-v-nao">🚗 N/A</span>';
                 const bFunc = cat.pedeFuncionario ? '<span class="badge-vinculo badge-v-sim">👤 Func</span>' : '<span class="badge-vinculo badge-v-nao">👤 N/A</span>';
                 const bIgnora = cat.ignoraLiquido ? '<span class="badge-vinculo" style="background:#fff5df; color:#d89433; border: 1px solid #f5deb3;">NÃO DEDUZ LÍQ.</span>' : '';
+                const bStatus = isAtivo ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-inactive">Inativa</span>';
+                const btnToggle = isAtivo
+                    ? `<button type="button" class="btn-icon btn-icon-warning" onclick="window.toggleAtivoCategoria('${cat.id}')" title="Inativar categoria">${iconInativar}</button>`
+                    : `<button type="button" class="btn-icon btn-icon-reactivate" onclick="window.toggleAtivoCategoria('${cat.id}')" title="Reativar categoria">${iconReativar}</button>`;
+                const btnExcluir = emUso
+                    ? `<button type="button" class="btn-icon btn-icon-blocked" onclick="window.excluirCategoria('${cat.id}')" title="Categoria em uso: não pode ser excluída (use Inativar)">${iconTrash}</button>`
+                    : `<button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirCategoria('${cat.id}')" title="Excluir">${iconTrash}</button>`;
                 
                 tbodyConf.innerHTML += `
-                    <tr>
+                    <tr class="${isAtivo ? '' : 'row-inativo'}">
                         <td style="font-weight: 500;">${cat.nome}</td>
                         <td>${bVeiculo} ${bFunc} ${bIgnora}</td>
+                        <td>${bStatus}</td>
                         <td style="text-align: center;">
                             <div class="action-flex" style="justify-content:center;">
                                 <button type="button" class="btn-icon btn-icon-edit" onclick="window.editarCategoria('${cat.id}')" title="Editar">${iconEdit}</button>
-                                <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirCategoria('${cat.id}')" title="Excluir">${iconTrash}</button>
+                                ${btnToggle}
+                                ${btnExcluir}
                             </div>
                         </td>
                     </tr>`;
@@ -1491,30 +1667,43 @@
     }
 
     function popularSelectsVinculos() {
+        const veiculosAtivos = veiculosDB.filter(v => v.ativo !== false);
+        const funcionariosAtivos = funcionariosDB.filter(f => f.ativo !== false);
+
         const selectVeiculo = document.getElementById('gasto-veiculo');
         const selectFuncionario = document.getElementById('gasto-funcionario');
         const selectEditVeiculo = document.getElementById('edit-gasto-veiculo');
         const selectEditFuncionario = document.getElementById('edit-gasto-funcionario');
         
         if (selectVeiculo) {
+            const valV = selectVeiculo.value;
             selectVeiculo.innerHTML = '<option value="">Selecione o Veículo...</option>';
-            veiculosDB.forEach(v => { selectVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
+            veiculosAtivos.forEach(v => { selectVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
+            if (veiculosAtivos.some(v => `${v.marcaModelo} - ${v.placa}` === valV)) selectVeiculo.value = valV;
         }
         if (selectEditVeiculo) {
             const valV = selectEditVeiculo.value;
             selectEditVeiculo.innerHTML = '<option value="">Selecione o Veículo...</option>';
-            veiculosDB.forEach(v => { selectEditVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
+            veiculosAtivos.forEach(v => { selectEditVeiculo.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`; });
+            if (valV && !veiculosAtivos.some(v => `${v.marcaModelo} - ${v.placa}` === valV)) {
+                selectEditVeiculo.innerHTML += `<option value="${valV}">${valV} (Inativo)</option>`;
+            }
             selectEditVeiculo.value = valV;
         }
         
         if (selectFuncionario) {
+            const valF = selectFuncionario.value;
             selectFuncionario.innerHTML = '<option value="">Selecione o Funcionário...</option>';
-            funcionariosDB.forEach(f => { selectFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+            funcionariosAtivos.forEach(f => { selectFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+            if (funcionariosAtivos.some(f => `${f.nome} ${f.sobrenome}` === valF)) selectFuncionario.value = valF;
         }
         if (selectEditFuncionario) {
             const valF = selectEditFuncionario.value;
             selectEditFuncionario.innerHTML = '<option value="">Selecione o Funcionário...</option>';
-            funcionariosDB.forEach(f => { selectEditFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+            funcionariosAtivos.forEach(f => { selectEditFuncionario.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`; });
+            if (valF && !funcionariosAtivos.some(f => `${f.nome} ${f.sobrenome}` === valF)) {
+                selectEditFuncionario.innerHTML += `<option value="${valF}">${valF} (Inativo)</option>`;
+            }
             selectEditFuncionario.value = valF;
         }
 
@@ -1588,7 +1777,7 @@
             panel.style.display = 'flex';
             const valAnterior = select.value;
             select.innerHTML = '<option value="">Selecione uma categoria...</option>';
-            catComVinculo.forEach(c => select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
+            catComVinculo.forEach(c => select.innerHTML += `<option value="${c.nome}">${c.nome}${c.ativo === false ? ' (Inativa)' : ''}</option>`);
             if (valAnterior && catComVinculo.find(c => c.nome === valAnterior)) select.value = valAnterior;
         } else {
             panel.style.display = 'none';
@@ -1678,17 +1867,33 @@
 
     function renderizarListaVeiculos() {
         const tbody = document.getElementById('tabela-veiculos'); if (!tbody) return;
+        veiculosDB.sort((a, b) => {
+            const diffStatus = (a.ativo === false ? 1 : 0) - (b.ativo === false ? 1 : 0);
+            return diffStatus !== 0 ? diffStatus : (a.marcaModelo || '').localeCompare(b.marcaModelo || '');
+        });
         tbody.innerHTML = '';
         veiculosDB.forEach(veiculo => {
+            const isAtivo = veiculo.ativo !== false;
+            const emUso = veiculoJaUsado(veiculo);
             const tr = document.createElement('tr');
+            if (!isAtivo) tr.className = 'row-inativo';
+            const bStatus = isAtivo ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-inactive">Inativo</span>';
+            const btnToggle = isAtivo
+                ? `<button type="button" class="btn-icon btn-icon-warning" onclick="window.toggleAtivoVeiculo('${veiculo.id}')" title="Inativar veículo">${iconInativar}</button>`
+                : `<button type="button" class="btn-icon btn-icon-reactivate" onclick="window.toggleAtivoVeiculo('${veiculo.id}')" title="Reativar veículo">${iconReativar}</button>`;
+            const btnExcluir = emUso
+                ? `<button type="button" class="btn-icon btn-icon-blocked" onclick="window.excluirVeiculo('${veiculo.id}')" title="Veículo em uso: não pode ser excluído (use Inativar)">${iconTrash}</button>`
+                : `<button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirVeiculo('${veiculo.id}')" title="Excluir">${iconTrash}</button>`;
             tr.innerHTML = `
                 <td><strong>${veiculo.marcaModelo || '-'}</strong></td>
                 <td>${veiculo.placa || '-'}</td>
                 <td>${veiculo.cor || '-'}</td>
+                <td>${bStatus}</td>
                 <td style="text-align:center;">
                     <div class="action-flex" style="justify-content:center;">
                         <button type="button" class="btn-icon btn-icon-edit" onclick="window.editarVeiculo('${veiculo.id}')" title="Editar">${iconEdit}</button>
-                        <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirVeiculo('${veiculo.id}')" title="Excluir">${iconTrash}</button>
+                        ${btnToggle}
+                        ${btnExcluir}
                     </div>
                 </td>`;
             tbody.appendChild(tr);
@@ -1697,15 +1902,33 @@
 
     function renderizarListaFuncionarios() {
         const tbody = document.getElementById('tabela-funcionarios'); if (!tbody) return;
+        funcionariosDB.sort((a, b) => {
+            const diffStatus = (a.ativo === false ? 1 : 0) - (b.ativo === false ? 1 : 0);
+            const nomeA = `${a.nome || ''} ${a.sobrenome || ''}`.trim();
+            const nomeB = `${b.nome || ''} ${b.sobrenome || ''}`.trim();
+            return diffStatus !== 0 ? diffStatus : nomeA.localeCompare(nomeB);
+        });
         tbody.innerHTML = '';
         funcionariosDB.forEach(funcionario => {
+            const isAtivo = funcionario.ativo !== false;
+            const emUso = funcionarioJaUsado(funcionario);
             const tr = document.createElement('tr');
+            if (!isAtivo) tr.className = 'row-inativo';
+            const bStatus = isAtivo ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-inactive">Inativo</span>';
+            const btnToggle = isAtivo
+                ? `<button type="button" class="btn-icon btn-icon-warning" onclick="window.toggleAtivoFuncionario('${funcionario.id}')" title="Inativar funcionário">${iconInativar}</button>`
+                : `<button type="button" class="btn-icon btn-icon-reactivate" onclick="window.toggleAtivoFuncionario('${funcionario.id}')" title="Reativar funcionário">${iconReativar}</button>`;
+            const btnExcluir = emUso
+                ? `<button type="button" class="btn-icon btn-icon-blocked" onclick="window.excluirFuncionario('${funcionario.id}')" title="Funcionário em uso: não pode ser excluído (use Inativar)">${iconTrash}</button>`
+                : `<button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirFuncionario('${funcionario.id}')" title="Excluir">${iconTrash}</button>`;
             tr.innerHTML = `
                 <td><strong>${funcionario.nome || ''} ${funcionario.sobrenome || ''}</strong></td>
+                <td>${bStatus}</td>
                 <td style="text-align:center;">
                     <div class="action-flex" style="justify-content:center;">
                         <button type="button" class="btn-icon btn-icon-edit" onclick="window.editarFuncionario('${funcionario.id}')" title="Editar">${iconEdit}</button>
-                        <button type="button" class="btn-icon btn-icon-danger" onclick="window.excluirFuncionario('${funcionario.id}')" title="Excluir">${iconTrash}</button>
+                        ${btnToggle}
+                        ${btnExcluir}
                     </div>
                 </td>`;
             tbody.appendChild(tr);
@@ -1770,7 +1993,17 @@
         if(isMesBloqueadoVerificacao(compRef)) { alert("Período bloqueado!"); return; }
         
         document.getElementById('edit-gasto-id').value = g.id;
-        document.getElementById('edit-gasto-categoria').value = g.categoria;
+        const selEditCat = document.getElementById('edit-gasto-categoria');
+        if (selEditCat) {
+            selEditCat.innerHTML = '<option value="">Selecione a Categoria...</option>';
+            categoriasDB.filter(c => c.ativo !== false).forEach(cat => {
+                selEditCat.innerHTML += `<option value="${cat.nome}">${cat.nome}</option>`;
+            });
+            if (g.categoria && !Array.from(selEditCat.options).some(o => o.value === g.categoria)) {
+                selEditCat.innerHTML += `<option value="${g.categoria}">${g.categoria} (Inativa)</option>`;
+            }
+            selEditCat.value = g.categoria;
+        }
         
         const compGasto = obterCompetenciaGasto(g) || document.getElementById('filtro-mes-lancamento').value;
         window.popularSelectsMesCompetenciaGasto(compGasto.split('-')[0], compGasto);
@@ -1785,9 +2018,30 @@
         document.getElementById('edit-gasto-valor').value = formatarMoeda(g.valor);
         
         window.verificarVinculosCategoriaModal();
-        
-        document.getElementById('edit-gasto-veiculo').value = g.veiculo || '';
-        document.getElementById('edit-gasto-funcionario').value = g.funcionario || '';
+
+        const selEditVeic = document.getElementById('edit-gasto-veiculo');
+        if (selEditVeic) {
+            selEditVeic.innerHTML = '<option value="">Selecione o Veículo...</option>';
+            veiculosDB.filter(v => v.ativo !== false).forEach(v => {
+                selEditVeic.innerHTML += `<option value="${v.marcaModelo} - ${v.placa}">${v.marcaModelo} - ${v.placa}</option>`;
+            });
+            if (g.veiculo && !Array.from(selEditVeic.options).some(o => o.value === g.veiculo)) {
+                selEditVeic.innerHTML += `<option value="${g.veiculo}">${g.veiculo} (Inativo)</option>`;
+            }
+            selEditVeic.value = g.veiculo || '';
+        }
+
+        const selEditFunc = document.getElementById('edit-gasto-funcionario');
+        if (selEditFunc) {
+            selEditFunc.innerHTML = '<option value="">Selecione o Funcionário...</option>';
+            funcionariosDB.filter(f => f.ativo !== false).forEach(f => {
+                selEditFunc.innerHTML += `<option value="${f.nome} ${f.sobrenome}">${f.nome} ${f.sobrenome}</option>`;
+            });
+            if (g.funcionario && !Array.from(selEditFunc.options).some(o => o.value === g.funcionario)) {
+                selEditFunc.innerHTML += `<option value="${g.funcionario}">${g.funcionario} (Inativo)</option>`;
+            }
+            selEditFunc.value = g.funcionario || '';
+        }
         
         document.getElementById('modal-edit-gasto').style.display = 'flex';
     };
@@ -1832,6 +2086,9 @@
             window.fecharModalEdicaoGasto();
             atualizarDashboardPrincipal();
             window.renderizarGastos();
+            renderizarListasDeCategorias();
+            renderizarListaVeiculos();
+            renderizarListaFuncionarios();
         } catch(err) {
             console.error(err);
             alert("Erro ao atualizar a despesa.");
@@ -1884,7 +2141,7 @@
         try {
             await updateDoc(doc(db, "categoriasGasto", id), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
             const idx = categoriasDB.findIndex(c => c.id === id);
-            if(idx > -1) categoriasDB[idx] = { id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora };
+            if(idx > -1) categoriasDB[idx] = { ...categoriasDB[idx], id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora };
             
             document.getElementById('modal-edit-categoria').style.display = 'none';
             renderizarListasDeCategorias();
@@ -1903,7 +2160,7 @@
         try {
             await updateDoc(doc(db, 'veiculos', id), { marcaModelo: marca, placa: placa, cor: cor });
             const idx = veiculosDB.findIndex(v => v.id === id);
-            if (idx > -1) veiculosDB[idx] = { id, marcaModelo: marca, placa: placa, cor: cor };
+            if (idx > -1) veiculosDB[idx] = { ...veiculosDB[idx], id, marcaModelo: marca, placa: placa, cor: cor };
             
             document.getElementById('modal-edit-veiculo').style.display = 'none';
             renderizarListaVeiculos(); 
@@ -1921,7 +2178,7 @@
         try {
             await updateDoc(doc(db, 'funcionarios', id), { nome: nome, sobrenome: sobrenome });
             const idx = funcionariosDB.findIndex(f => f.id === id);
-            if(idx > -1) funcionariosDB[idx] = { id, nome: nome, sobrenome: sobrenome };
+            if(idx > -1) funcionariosDB[idx] = { ...funcionariosDB[idx], id, nome: nome, sobrenome: sobrenome };
             
             document.getElementById('modal-edit-funcionario').style.display = 'none';
             renderizarListaFuncionarios(); 
@@ -1940,8 +2197,8 @@
         if (categoriasDB.find(c => c.nome === nomeUpper)) { alert("Esta categoria já existe!"); return; }
         
         try {
-            const docRef = await addDoc(collection(db, "categoriasGasto"), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
-            categoriasDB.push({ id: docRef.id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora });
+            const docRef = await addDoc(collection(db, "categoriasGasto"), { nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora, ativo: true });
+            categoriasDB.push({ id: docRef.id, nome: nomeUpper, pedeVeiculo: chkVeiculo, pedeFuncionario: chkFunc, ignoraLiquido: chkIgnora, ativo: true });
             this.reset();
             renderizarListasDeCategorias();
         } catch(e) { console.error("Erro ao salvar categoria", e); }
@@ -1949,7 +2206,7 @@
 
     document.getElementById('form-veiculo').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const veiculo = { marcaModelo: document.getElementById('veiculo-marca-modelo').value.trim(), placa: document.getElementById('veiculo-placa').value.trim().toUpperCase(), cor: document.getElementById('veiculo-cor').value.trim() };
+        const veiculo = { marcaModelo: document.getElementById('veiculo-marca-modelo').value.trim(), placa: document.getElementById('veiculo-placa').value.trim().toUpperCase(), cor: document.getElementById('veiculo-cor').value.trim(), ativo: true };
 
         try { 
             const docRef = await addDoc(collection(db, 'veiculos'), veiculo); 
@@ -1962,7 +2219,7 @@
 
     document.getElementById('form-funcionario').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const funcionario = { nome: document.getElementById('funcionario-nome').value.trim(), sobrenome: document.getElementById('funcionario-sobrenome').value.trim() };
+        const funcionario = { nome: document.getElementById('funcionario-nome').value.trim(), sobrenome: document.getElementById('funcionario-sobrenome').value.trim(), ativo: true };
 
         try { 
             const docRef = await addDoc(collection(db, 'funcionarios'), funcionario); 
@@ -2475,6 +2732,9 @@
                 atualizarDashboardPrincipal();
                 window.renderizarGastos();
             }
+            renderizarListasDeCategorias();
+            renderizarListaVeiculos();
+            renderizarListaFuncionarios();
         } catch(e) { console.error(e); }
     });
 
